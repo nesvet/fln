@@ -1,0 +1,6 @@
+.DS_Store
+.cursor/
+src/version.ts
+node_modules/
+dist/
+flatr

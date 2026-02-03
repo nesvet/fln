@@ -1,0 +1,22 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"isolatedModules": true,
+		"resolveJsonModule": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+		"types": [ "bun-types", "node" ],
+		"paths": {
+			"$api": [ "./src/api/index.ts" ],
+			"$config": [ "./src/config/index.ts" ],
+			"$core": [ "./src/core/index.ts" ],
+			"$infra": [ "./src/infra/index.ts" ],
+			"$version": [ "./src/version.ts" ]
+		}
+	}
+}

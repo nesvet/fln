@@ -115,7 +115,7 @@ jobs:
           echo "checksumPath=${archive}.sha256" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: flatr-${{ matrix.platform }}-${{ matrix.architecture }}
           path: |

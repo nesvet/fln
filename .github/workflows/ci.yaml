@@ -36,6 +36,11 @@ jobs:
       - name: Generate version file
         run: bun run generate:version
 
+      - name: Examples up-to-date
+        run: |
+          bun run generate:examples
+          git diff --exit-code -- "examples/*.md"
+
       - name: Lint
         run: bun run lint
 

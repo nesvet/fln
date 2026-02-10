@@ -103,7 +103,7 @@ async function writeMarkdown(result: ScanResult, config: FlnConfig): Promise<voi
 		await writer.writeLine("");
 		await writer.writeLine(`# Codebase Snapshot: ${result.projectName}`);
 		await writer.writeLine("");
-		await writer.writeLine(`Generated: ${config.generatedDate ?? formatDateTime()}`);
+		await writer.writeLine(`Generated: ${config.generatedDate ?? formatDateTime()}  `);
 		await writer.writeLine(`Files: ${result.stats.files} | Directories: ${result.stats.directories}`);
 		await writer.writeLine("");
 		await writer.writeLine("---");

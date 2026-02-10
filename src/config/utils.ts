@@ -157,7 +157,10 @@ async function tryStat(pathValue: string): Promise<Awaited<ReturnType<typeof sta
 	}
 }
 
-async function resolveUniquePath(filePath: string): Promise<string> {
+async function resolveUniquePath(filePath: string, overwrite: boolean): Promise<string> {
+	if (overwrite)
+		return filePath;
+	
 	const existingStats = await tryStat(filePath);
 	if (!existingStats)
 		return filePath;
@@ -180,6 +183,7 @@ async function resolveUniquePath(filePath: string): Promise<string> {
 export async function resolveOutputPath(
 	outputValue: string | undefined,
 	rootDirectory: string,
+	overwrite: boolean,
 	format: "json" | "md"
 ): Promise<string> {
 	const projectMeta = await getProjectMetadata(rootDirectory);
@@ -188,7 +192,7 @@ export async function resolveOutputPath(
 		`${projectMeta.name}.${format}`;
 	
 	if (!outputValue)
-		return await resolveUniquePath(join(rootDirectory, baseFileName));
+		return await resolveUniquePath(join(rootDirectory, baseFileName), overwrite);
 	
 	if (outputValue === "/dev/null" || outputValue === "nul")
 		return outputValue;
@@ -199,8 +203,8 @@ export async function resolveOutputPath(
 	if (hasTrailingSeparator || outputStats?.isDirectory()) {
 		const filePath = join(outputValue, baseFileName);
 		
-		return await resolveUniquePath(filePath);
+		return await resolveUniquePath(filePath, overwrite);
 	}
 	
-	return await resolveUniquePath(outputValue);
+	return await resolveUniquePath(outputValue, overwrite);
 }

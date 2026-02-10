@@ -3,6 +3,7 @@ import type { LogLevel, OutputFormat } from "$core";
 
 export type RawConfigFile = Partial<{
 	outputFile: string;
+	overwrite: boolean;
 	excludePatterns: string[];
 	includePatterns: string[];
 	includeHidden: boolean;
@@ -23,6 +24,7 @@ export type RawConfigFile = Partial<{
 export type FlnConfig = {
 	rootDirectory: string;
 	outputFile: string;
+	overwrite: boolean;
 	excludePatterns: string[];
 	includePatterns: string[];
 	excludedPaths: string[];

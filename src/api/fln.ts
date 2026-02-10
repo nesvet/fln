@@ -42,16 +42,19 @@ export async function fln(options: FlnOptions = {}): Promise<FlnResult> {
 	const fileConfig = normalizeConfigFile(await loadConfigFile(configFilePath));
 	
 	const format: "json" | "md" = options.format ?? (fileConfig.format as "json" | "md" | undefined) ?? "md";
+	const overwrite = options.overwrite ?? fileConfig.overwrite ?? false;
 	
 	const outputValue = options.outputFile ?? fileConfig.outputFile;
 	const outputFile = await resolveOutputPath(
 		outputValue ? resolve(outputValue) : undefined,
 		rootDirectory,
+		overwrite,
 		format
 	);
 	
 	const userConfig = {
 		outputFile,
+		overwrite: options.overwrite,
 		excludePatterns: options.excludePatterns,
 		includePatterns: options.includePatterns,
 		includeHidden: options.includeHidden,

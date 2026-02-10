@@ -13,6 +13,7 @@ ${bold("Usage:")} fln ${cyan("[directory]")} ${dim("[...flags]")}
 
 ${bold("Options:")}
   ${cyan("-o, --output")} ${dim("<path>")}       Output file or directory path ${dim("(default: <name>-<version>.<ext>)")}
+  ${cyan("-w, --overwrite")}           Overwrite output file instead of adding numeric suffix
   ${cyan("-e, --exclude")} ${dim("<glob>")}      Exclude patterns ${dim("(repeatable)")}
   ${cyan("-i, --include")} ${dim("<glob>")}      Force include patterns ${dim("(repeatable)")}
   ${cyan("    --include-hidden")}      Include hidden files and directories

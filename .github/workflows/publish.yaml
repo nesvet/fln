@@ -1,4 +1,4 @@
-name: Release npm
+name: Publish
 
 on:
   release:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: release-npm-${{ github.ref }}
+  group: publish-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -27,7 +27,6 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "lts/*"
-          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         run: bun install --frozen-lockfile

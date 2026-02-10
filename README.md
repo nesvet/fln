@@ -146,12 +146,16 @@ fln . --no-contents --format json
 
 # Preview without writing
 fln . --dry-run
+
+# Overwrite output file instead of creating codebase-1.md
+fln . -o codebase.md -w
 ```
 
 <details>
 <summary>All CLI options</summary>
 
 - `-o, --output <path>` Output file or directory
+- `-w, --overwrite` Overwrite output file instead of adding numeric suffix
 - `-e, --exclude <glob>` Exclude patterns (repeatable)
 - `-i, --include <glob>` Force include patterns
 - `--include-hidden` Include hidden files and directories
@@ -204,7 +208,7 @@ jobs:
 
       - name: Generate Snapshot
         # Generates codebase.md without installing fln globally
-        run: npx fln . -o codebase.md --no-ansi
+        run: npx fln . -o codebase.md -w --no-ansi
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v6
@@ -234,6 +238,7 @@ import { fln } from "fln";
 const result = await fln({
   rootDirectory: "./src",
   outputFile: "output.md",
+  overwrite: true,
   excludePatterns: [ "*.test.ts", "fixtures/" ],
   format: "md",
   onProgress: (current, total) => {
@@ -257,6 +262,7 @@ All CLI options are available via `FlnOptions`.
 ```json
 {
 	"outputFile": "output.md",
+	"overwrite": false,
 	"excludePatterns": [
 		"dist/",
 		"**/*.snap"

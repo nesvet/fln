@@ -52,6 +52,7 @@ export async function runCommandLine(): Promise<void> {
 			"no-tree": { type: "boolean" },
 			format: { type: "string" },
 			"dry-run": { type: "boolean" },
+			overwrite: { type: "boolean", short: "w" },
 			quiet: { type: "boolean", short: "q" },
 			verbose: { type: "boolean", short: "V" },
 			debug: { type: "boolean" },
@@ -105,6 +106,7 @@ export async function runCommandLine(): Promise<void> {
 		outputFile: isDryRun ?
 			(process.platform === "win32" ? "nul" : "/dev/null") :
 			(values.output ? resolve(values.output) : undefined),
+		overwrite: values.overwrite,
 		excludePatterns: values.exclude,
 		includePatterns: values.include,
 		includeHidden: values["include-hidden"],

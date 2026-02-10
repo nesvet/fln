@@ -79,6 +79,28 @@ describe("fln end-to-end", () => {
 		expect(entries).toContain("fln-counter-1.0.0-1.md");
 	});
 	
+	it("overwrites output file when --overwrite is set", async () => {
+		const rootDirectory = await createTempProject("fln-overwrite", "1.0.0");
+		const outputDirectory = join(rootDirectory, "out");
+		
+		await mkdir(outputDirectory, { recursive: true });
+		const outputFile = join(outputDirectory, "fln-overwrite-1.0.0.md");
+		await writeFile(outputFile, "existing\n");
+		
+		await runCli(rootDirectory, [
+			"--output", outputDirectory,
+			"--overwrite",
+			"--quiet", "--no-ansi"
+		]);
+		
+		const entries = await readdir(outputDirectory);
+		expect(entries).toContain("fln-overwrite-1.0.0.md");
+		expect(entries).not.toContain("fln-overwrite-1.0.0-1.md");
+		
+		const content = await readFile(outputFile, "utf8");
+		expect(content).not.toBe("existing\n");
+	});
+	
 	it("does not write output in dry-run", async () => {
 		const rootDirectory = await createTempProject("fln-dry", "2.0.0");
 		const outputDirectory = join(rootDirectory, "out");

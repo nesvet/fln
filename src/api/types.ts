@@ -18,6 +18,12 @@ export type FlnOptions = {
 	outputFile?: string;
 	
 	/**
+	 * Overwrite output file instead of adding numeric suffix when it already exists
+	 * @default false
+	 */
+	overwrite?: boolean;
+	
+	/**
 	 * Glob patterns to exclude (e.g., ["*.test.ts", "fixtures/"])
 	 * @default []
 	 */

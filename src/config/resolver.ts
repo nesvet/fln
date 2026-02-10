@@ -19,6 +19,7 @@ type ConfigOverrides = Partial<Pick<
 	"maximumFileSizeBytes" |
 	"maximumTotalSizeBytes" |
 	"outputFile" |
+	"overwrite" |
 	"useAnsi" |
 	"useGitignore"
 >> & Partial<{ format: string }>;
@@ -42,6 +43,7 @@ function getDefaultOutputFile(format: OutputFormat): string {
 export function normalizeConfigFile(fileConfig: RawConfigFile): ConfigOverrides {
 	return {
 		outputFile: fileConfig.outputFile,
+		overwrite: fileConfig.overwrite,
 		excludePatterns: fileConfig.excludePatterns,
 		includePatterns: fileConfig.includePatterns,
 		includeHidden: fileConfig.includeHidden,
@@ -73,6 +75,7 @@ export function resolveConfig(
 	return {
 		rootDirectory,
 		outputFile,
+		overwrite: userConfig.overwrite ?? fileConfig.overwrite ?? false,
 		excludePatterns: [
 			...(fileConfig.excludePatterns ?? []),
 			...(userConfig.excludePatterns ?? [])

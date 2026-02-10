@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- API option to overwrite existing output files
+
+### Fixed
+
+- Corrected markdown line break for generated date
+
 ## [1.0.0] - 2026-02-09
 
 ### Added

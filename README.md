@@ -20,7 +20,7 @@ npx fln . -o codebase.md
 
 Works with **Claude**, **ChatGPT**, **Gemini**, **Grok**, **Cursor**, **Copilot**, and *any* AI tool.
 
-**`fln`** (short for *flatten*) is **language-agnostic** by design: TypeScript, Python, Java, Go, Rust, Bash, SQL, mixed monorepos — it treats everything as plain text, detects project metadata from common manifests (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `CMakeLists.txt`, `vcpkg.json`), respects `.gitignore`, and skips binaries by default.
+**`fln`** (short for *flatten*) is **language-agnostic** by design: TypeScript, Python, Java, Go, Rust, Bash, SQL, mixed monorepos — it treats everything as plain text, detects project metadata from common manifests (`package.json`, `pyproject.toml`, `pom.xml`, `go.mod`, `Cargo.toml`, `CMakeLists.txt`, `vcpkg.json`), respects `.gitignore`, and skips binaries by default.
 
 ## Why fln exists
 
@@ -80,17 +80,23 @@ Zero dependencies on external services. Zero tracking. Just a tool that does its
 
 ## Install
 
+##### npm
 ```bash
-# npm
 npm install -g fln
+```
 
-# one-liner (macOS/Linux)
-curl -fsSL "https://raw.githubusercontent.com/nesvet/fln/main/install.sh" | sh
+##### Linux & macOS ([view install script](./install.sh))
+```bash
+curl -fsSL https://fln.nesvet.dev/install | sh
+```
 
-# one-liner (Windows)
-irm "https://raw.githubusercontent.com/nesvet/fln/main/install.ps1" | iex
+##### Windows ([view install script](./install.ps1))
+```bash
+powershell -c "irm fln.nesvet.dev/install.ps1 | iex"
+```
 
-# or just run without installing
+##### Or just run without installing
+```bash
 npx fln . -o codebase.md
 ```
 
@@ -102,7 +108,7 @@ npx fln . -o codebase.md
 Pin a version or custom install directory:
 
 ```bash
-curl -fsSL "https://raw.githubusercontent.com/nesvet/fln/main/install.sh" | FLN_VERSION="<version>" INSTALL_DIR="$HOME/.local/bin" sh
+curl -fsSL "https://fln.nesvet.dev/install" | FLN_VERSION="<version>" INSTALL_DIR="$HOME/.local/bin" sh
 ```
 
 ### One-line installer options (Windows PowerShell)
@@ -110,7 +116,7 @@ curl -fsSL "https://raw.githubusercontent.com/nesvet/fln/main/install.sh" | FLN_
 ```powershell
 $env:FLN_VERSION = "<version>"
 $env:INSTALL_DIR = "$env:LOCALAPPDATA\\fln\\bin"
-irm "https://raw.githubusercontent.com/nesvet/fln/main/install.ps1" | iex
+powershell -c "irm fln.nesvet.dev/install.ps1 | iex"
 ```
 
 ### Manual download (GitHub Releases)
@@ -118,7 +124,6 @@ irm "https://raw.githubusercontent.com/nesvet/fln/main/install.ps1" | iex
 ```bash
 curl -L "https://github.com/nesvet/fln/releases/latest/download/fln-macos-x64.tar.gz" | tar -xz -C /usr/local/bin
 chmod +x /usr/local/bin/fln
-fln --help
 ```
 
 </details>
@@ -169,7 +174,7 @@ fln . -o codebase.md -w
 - `--follow-symlinks` Follow symlinks
 - `--no-ansi` Disable ANSI colors
 - `--no-sponsor-message` Hide support message (also: `FLN_NO_SPONSOR=1`)
-- `--generated-date <date>` Use this date in the "Generated" header (format: `YYYY-MM-DD HH:mm`)
+- `--generated-date <date>` Use this date in the “Generated” header (format: `YYYY-MM-DD HH:mm`)
 - `--banner <text>` Add text at the beginning
 - `--footer <text>` Add text at the end of the output
 - `-q, --quiet` Minimal output
@@ -288,7 +293,7 @@ All CLI options are available via `FlnOptions`.
 <details>
 <summary>Output naming & formats</summary>
 
-- Uses project name + version if available (`package.json`, `pyproject.toml`, `Cargo.toml`, `vcpkg.json`, `go.mod`, or `CMakeLists.txt`)  
+- Uses project name + version if available (`package.json`, `pyproject.toml`, `pom.xml`, `go.mod`, `Cargo.toml`, `CMakeLists.txt` or `vcpkg.json`)  
 - `md` includes tree + contents
 - `json` includes `rootDirectory`, `tree`, `stats`
 

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-02-11
+
+### Added
+
+- Colored install script output with FLN_SILENT to disable
+- Install script validation (version, directory, file size limits)
+- PATH detection and shell-specific instructions in install scripts
+
+### Fixed
+
+- Correct gitignore check for directories in scanTree (trailing slash)
+- Extend NO_COLOR support to any non-empty value per spec
+
+### Changed
+
+- Replace TypeScript path aliases with relative imports
+- CLI entry point moved from `main.ts` to `index.ts`
+- Improved error handling with optional DEBUG stack trace
+- Install URLs updated to fln.nesvet.dev
+- Add `pom.xml` to manifest list in docs
+
 ## [1.1.1] - 2026-02-10
 
 ### Added
@@ -41,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cross-platform shell installers with SHA256 verification (macOS, Linux, Windows)
 - Comprehensive test suite
 
-[Unreleased]: https://github.com/nesvet/fln/compare/1.1.1...HEAD
+[Unreleased]: https://github.com/nesvet/fln/compare/1.1.2...HEAD
+[1.1.2]: https://github.com/nesvet/fln/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/nesvet/fln/compare/1.0.0...1.1.1
 [1.0.0]: https://github.com/nesvet/fln/releases/tag/1.0.0

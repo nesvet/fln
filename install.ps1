@@ -244,11 +244,10 @@ switch ($architecture) {
 		$asset = "fln-windows-x64.zip"
 	}
 	"arm64" {
-		$asset = "fln-windows-x64.zip"
-		Write-FlnWarning "ARM64 detected. Using x64 build (will run through emulation)."
+		$asset = "fln-windows-arm64.zip"
 	}
 	default {
-		Stop-FlnInstall "Unsupported architecture: $architecture. Only x64 builds are available for Windows."
+		Stop-FlnInstall "Unsupported architecture: $architecture. Only x64 and arm64 builds are available for Windows."
 	}
 }
 

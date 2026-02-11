@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Native Windows ARM64 build support (release workflow and install script)
+
 ## [1.1.2] - 2026-02-11
 
 ### Added

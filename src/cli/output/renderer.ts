@@ -1,10 +1,13 @@
-import type { FlnResult } from "$api";
-import type { LogLevel } from "$core";
-import { renderBreakdown } from "./components/breakdown";
-import { renderErrors } from "./components/errors";
-import { ProgressBar } from "./components/progressBar";
-import { renderSummary } from "./components/summary";
-import { renderWarnings, type Warning } from "./components/warnings";
+import type { FlnResult } from "../../api";
+import type { LogLevel } from "../../core";
+import {
+	ProgressBar,
+	renderBreakdown,
+	renderErrors,
+	renderSummary,
+	renderWarnings,
+	type Warning
+} from "./components";
 import { formatTime } from "./formatter";
 import { applyColor, colors, symbols } from "./styles";
 

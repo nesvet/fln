@@ -14,6 +14,7 @@ const distExists = existsSync(join(import.meta.dir, "../dist/api/index.js"));
 
 describe.skipIf(!distExists)("fln API", () => {
 	it("processes project and returns FlnResult", async () => {
+		// @ts-expect-error — dynamic import of built output, exists only after build
 		const { fln } = await import("../dist/api/index.js");
 		const rootDirectory = await mkdtemp(join(tmpdir(), "fln-api-"));
 		await writeFile(join(rootDirectory, "package.json"), JSON.stringify({ name: "api-test", version: "1.0.0" }, null, "\t"));

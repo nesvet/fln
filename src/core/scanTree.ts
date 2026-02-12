@@ -10,15 +10,15 @@ import { cpus } from "node:os";
 import { relative, sep } from "node:path";
 import type { Dirent } from "node:fs";
 import ignore from "ignore";
-import type { Logger } from "../infra";
-import { IgnoreMatcher } from "./ignoreMatcher";
+import type { Logger } from "../infra/index.js";
+import { IgnoreMatcher } from "./ignoreMatcher.js";
 import type {
 	FileNode,
 	ScanOptions,
 	ScanResult,
 	ScanStats,
 	SkipReason
-} from "./types";
+} from "./types.js";
 
 
 function normalizePathSegment(pathSegment: string): string {

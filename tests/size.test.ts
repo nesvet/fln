@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { formatByteSize, formatTokenCount, parseByteSize } from "../src/core/size";
+import { formatByteSize, formatTokenCount, parseByteSize } from "../src/core/size.js";
 
 
 describe("size utilities", () => {

@@ -9,7 +9,7 @@ import {
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { describe, expect, it } from "bun:test";
-import { runCommandLine } from "../src/cli/commandLine";
+import { runCommandLine } from "../src/cli/commandLine.js";
 
 
 type RuntimeState = {

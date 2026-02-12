@@ -1,12 +1,12 @@
 import { createReadStream } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
-import { createOutputWriter, formatDateTime } from "../infra";
-import { VERSION } from "../version";
-import type { FlnConfig } from "../config";
-import { renderTree } from "./renderTree";
-import { formatByteSize } from "./size";
-import type { FileNode, ScanResult } from "./types";
+import { createOutputWriter, formatDateTime } from "../infra/index.js";
+import { VERSION } from "../version.js";
+import type { FlnConfig } from "../config/index.js";
+import { renderTree } from "./renderTree.js";
+import { formatByteSize } from "./size.js";
+import type { FileNode, ScanResult } from "./types.js";
 
 
 function getLanguageFromFilename(fileName: string): string {

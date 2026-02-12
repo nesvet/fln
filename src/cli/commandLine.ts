@@ -1,21 +1,21 @@
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { fln } from "../api";
+import { fln } from "../api/index.js";
 import {
 	collectExtensionStats,
 	collectProcessedFiles,
 	parseByteSize,
 	type FileNode
-} from "../core";
+} from "../core/index.js";
 import {
 	getTerminalInfo,
 	incrementUsageCount,
 	shouldShowSponsorMessage,
 	shouldUseColors
-} from "../infra";
-import { VERSION } from "../version";
-import { formatHelpMessage } from "./help";
-import { OutputRenderer } from "./output";
+} from "../infra/index.js";
+import { VERSION } from "../version.js";
+import { formatHelpMessage } from "./help.js";
+import { OutputRenderer } from "./output/index.js";
 
 
 function isCI(): boolean {

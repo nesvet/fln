@@ -2,7 +2,7 @@ import { constants } from "node:fs";
 import { access, readFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import ignore from "ignore";
-import type { Logger } from "../infra";
+import type { Logger } from "../infra/index.js";
 
 
 type IgnoreMatcherOptions = {

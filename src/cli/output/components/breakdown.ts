@@ -1,5 +1,5 @@
-import { formatFileCount } from "../formatter";
-import { applyColor, colors, symbols } from "../styles";
+import { formatFileCount } from "../formatter.js";
+import { applyColor, colors, symbols } from "../styles.js";
 
 
 export function renderBreakdown(

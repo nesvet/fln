@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import type { RawConfigFile } from "./types";
+import type { RawConfigFile } from "./types.js";
 
 
 export async function loadConfigFile(configPath: string): Promise<RawConfigFile> {

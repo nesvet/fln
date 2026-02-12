@@ -1,4 +1,4 @@
-import type { LogLevel, OutputFormat } from "../core";
+import type { LogLevel, OutputFormat } from "../core/index.js";
 
 
 export type RawConfigFile = Partial<{

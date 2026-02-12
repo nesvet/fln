@@ -55,6 +55,13 @@ jobs:
             packageType: zip
             targetName: bun-windows-x64
             outputName: fln.exe
+          - os: windows-11-arm
+            platform: windows
+            architecture: arm64
+            archiveName: fln-windows-arm64.zip
+            packageType: zip
+            targetName: bun-windows-x64
+            outputName: fln.exe
     steps:
       - name: Checkout
         uses: actions/checkout@v6

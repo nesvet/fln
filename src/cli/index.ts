@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { runCommandLine } from "./commandLine";
+import { runCommandLine } from "./commandLine.js";
 
 
 try {

@@ -1,4 +1,4 @@
-import type { LogLevel, ProgressCallback } from "../core";
+import type { LogLevel, ProgressCallback } from "../core/index.js";
 
 
 /**

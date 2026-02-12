@@ -2,7 +2,7 @@ import { once } from "node:events";
 import { createWriteStream } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
-import { countTokens } from "./countTokens";
+import { countTokens } from "./countTokens.js";
 
 
 type OutputWriter = {

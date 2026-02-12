@@ -2,7 +2,7 @@
 
 import { readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { fln } from "../src/api";
+import { fln } from "../src/api/index.js";
 
 
 const examplesDir = resolve(import.meta.dir, "..", "examples");

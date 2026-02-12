@@ -1,5 +1,5 @@
-import type { FlnResult } from "../../api";
-import type { LogLevel } from "../../core";
+import type { FlnResult } from "../../api/index.js";
+import type { LogLevel } from "../../core/index.js";
 import {
 	ProgressBar,
 	renderBreakdown,
@@ -7,9 +7,9 @@ import {
 	renderSummary,
 	renderWarnings,
 	type Warning
-} from "./components";
-import { formatTime } from "./formatter";
-import { applyColor, colors, symbols } from "./styles";
+} from "./components/index.js";
+import { formatTime } from "./formatter.js";
+import { applyColor, colors, symbols } from "./styles.js";
 
 
 export type RendererOptions = {

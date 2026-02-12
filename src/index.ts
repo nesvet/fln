@@ -1,3 +1,3 @@
-export * from "./api";
-export * from "./core";
-export * from "./version";
+export * from "./api/index.js";
+export * from "./core/index.js";
+export * from "./version.js";

@@ -1,10 +1,10 @@
-import type { LogLevel } from "../core";
+import type { LogLevel } from "../core/index.js";
 import {
 	ansi,
 	getTerminalInfo,
 	renderBox,
 	symbols
-} from "./terminal";
+} from "./terminal.js";
 
 
 type LoggerOptions = {

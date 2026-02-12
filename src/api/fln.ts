@@ -6,10 +6,10 @@ import {
 	normalizeConfigFile,
 	resolveConfig,
 	resolveOutputPath
-} from "../config";
-import { parseByteSize, scanTree, writeOutput } from "../core";
-import { createLogger } from "../infra";
-import type { FlnOptions, FlnResult } from "./types";
+} from "../config/index.js";
+import { parseByteSize, scanTree, writeOutput } from "../core/index.js";
+import { createLogger } from "../infra/index.js";
+import type { FlnOptions, FlnResult } from "./types.js";
 
 /**
  * Flatten your codebase into a single AI-ready file

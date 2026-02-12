@@ -1,7 +1,7 @@
-import { parseByteSize, type OutputFormat } from "../core";
-import { parseGeneratedDate } from "../infra";
-import { defaultMaximumFileSizeBytes } from "./defaults";
-import type { FlnConfig, RawConfigFile } from "./types";
+import { parseByteSize, type OutputFormat } from "../core/index.js";
+import { parseGeneratedDate } from "../infra/index.js";
+import { defaultMaximumFileSizeBytes } from "./defaults.js";
+import type { FlnConfig, RawConfigFile } from "./types.js";
 
 
 type ConfigOverrides = Partial<Pick<

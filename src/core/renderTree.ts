@@ -1,4 +1,4 @@
-import type { FileNode } from "./types";
+import type { FileNode } from "./types.js";
 
 
 function formatNodeSuffix(node: FileNode): string {

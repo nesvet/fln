@@ -1,4 +1,4 @@
-import { applyColor, colors } from "./output";
+import { applyColor, colors } from "./output/index.js";
 
 
 export function formatHelpMessage(useAnsi: boolean): string {

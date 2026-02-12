@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { formatDateTime, parseGeneratedDate } from "../src/infra/datetime";
+import { formatDateTime, parseGeneratedDate } from "../src/infra/datetime.js";
 
 
 describe("datetime utilities", () => {

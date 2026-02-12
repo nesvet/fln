@@ -1,5 +1,5 @@
 import { extname } from "node:path";
-import type { FileNode } from "./types";
+import type { FileNode } from "./types.js";
 
 
 export function collectExtensionStats(root: FileNode): Map<string, number> {

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-02-12
+
+### Fixed
+
+- npx run (Node ESM compatibility via explicit .js imports)
+- Native Windows ARM64 build support (release workflow and install script)
+
+### Changed
+
+- Show full install path in Windows install script (instead of `~` shorthand)
+- Replace bare path imports with explicit `index.js` for Node ESM
+- Run tests after npm build in CI
+
 ## [1.1.2] - 2026-02-11
 
 ### Added
@@ -62,7 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cross-platform shell installers with SHA256 verification (macOS, Linux, Windows)
 - Comprehensive test suite
 
-[Unreleased]: https://github.com/nesvet/fln/compare/1.1.2...HEAD
+[Unreleased]: https://github.com/nesvet/fln/compare/1.1.3...HEAD
+[1.1.3]: https://github.com/nesvet/fln/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/nesvet/fln/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/nesvet/fln/compare/1.0.0...1.1.1
 [1.0.0]: https://github.com/nesvet/fln/releases/tag/1.0.0

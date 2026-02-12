@@ -1,4 +1,4 @@
-import { applyColor, colors, symbols } from "../styles";
+import { applyColor, colors, symbols } from "../styles.js";
 
 
 export type Warning = {

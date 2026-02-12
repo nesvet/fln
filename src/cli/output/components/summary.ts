@@ -1,6 +1,6 @@
 import { basename } from "node:path";
-import { formatFileCount, formatTokenCount } from "../formatter";
-import { applyColor, colors, symbols } from "../styles";
+import { formatFileCount, formatTokenCount } from "../formatter.js";
+import { applyColor, colors, symbols } from "../styles.js";
 
 
 export function renderSummary(data: {

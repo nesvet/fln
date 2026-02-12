@@ -47,11 +47,11 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-      - name: Test
-        run: bun run test
-
       - name: Build npm package
         run: bun run build:npm
+
+      - name: Test
+        run: bun run test
 
       - name: Build binary
         run: bun run build

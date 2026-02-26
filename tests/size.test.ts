@@ -12,9 +12,9 @@ describe("size utilities", () => {
 	
 	it("formats byte sizes", () => {
 		expect(formatByteSize(0)).toBe("0 B");
-		expect(formatByteSize(1024)).toBe("1.00 KB");
-		expect(formatByteSize(1048576)).toBe("1.00 MB");
-		expect(formatByteSize(1073741824)).toBe("1.00 GB");
+		expect(formatByteSize(1024)).toBe("1 KB");
+		expect(formatByteSize(1048576)).toBe("1 MB");
+		expect(formatByteSize(1073741824)).toBe("1 GB");
 	});
 	
 	it("throws on invalid sizes", () => {

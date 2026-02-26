@@ -68,42 +68,47 @@ async function writeMarkdownContent(
 		await writer.write("\n");
 }
 
-function *iterateFileNodes(node: FileNode): Generator<FileNode> {
-	if (node.type === "file")
-		yield node;
-	
-	if (node.children)
-		for (const child of node.children)
-			yield* iterateFileNodes(child);
-}
-
-function filterSkippedNodes(node: FileNode): FileNode | undefined {
+function filterAndCollectFileNodes(node: FileNode): {
+	filtered: FileNode | undefined;
+	fileNodes: FileNode[];
+} {
 	if (node.skipReason)
-		return undefined;
+		return { filtered: undefined, fileNodes: [] };
 	
-	if (!node.children || node.children.length === 0)
-		return { ...node };
+	if (node.type === "file")
+		return { filtered: { ...node }, fileNodes: [ node ] };
 	
-	const children = node.children
-		.map(child => filterSkippedNodes(child))
-		.filter((child): child is FileNode => child !== undefined);
+	const allFileNodes: FileNode[] = [];
+	const filteredChildren: FileNode[] = [];
+	for (const child of node.children ?? []) {
+		const { filtered, fileNodes } = filterAndCollectFileNodes(child);
+		allFileNodes.push(...fileNodes);
+		if (filtered)
+			filteredChildren.push(filtered);
+	}
 	
-	return { ...node, children };
+	if (filteredChildren.length === 0)
+		return { filtered: undefined, fileNodes: allFileNodes };
+	
+	return {
+		filtered: { ...node, children: filteredChildren },
+		fileNodes: allFileNodes
+	};
 }
 
 async function writeMarkdown(result: ScanResult, config: FlnConfig): Promise<void> {
-	const writer = await createOutputWriter(config.outputFile, config.maximumTotalSizeBytes);
-	const outputRoot = filterSkippedNodes(result.root);
-	
-	if (!outputRoot)
-		throw new Error("Root directory was skipped.");
+	const writer = await createOutputWriter(config.output, config.maxTotalSize);
+	const { filtered: outputRoot, fileNodes } = filterAndCollectFileNodes(result.root);
+	const effectiveRoot = outputRoot ?? { ...result.root, children: [] };
 	
 	try {
-		await writer.writeLine(`<!-- 🥞 fln ${VERSION} -->`);
-		await writer.writeLine("");
+		if (config.output !== "-") {
+			await writer.writeLine(`<!-- 🥞 fln ${VERSION} -->`);
+			await writer.writeLine("");
+		}
 		await writer.writeLine(`# Codebase Snapshot: ${result.projectName}`);
 		await writer.writeLine("");
-		await writer.writeLine(`Generated: ${config.generatedDate ?? formatDateTime()}  `);
+		await writer.writeLine(`Generated: ${config.date ?? formatDateTime()}  `);
 		await writer.writeLine(`Files: ${result.stats.files} | Directories: ${result.stats.directories}`);
 		await writer.writeLine("");
 		await writer.writeLine("---");
@@ -117,15 +122,15 @@ async function writeMarkdown(result: ScanResult, config: FlnConfig): Promise<voi
 		if (config.includeTree) {
 			await writer.writeLine("## Directory Tree");
 			await writer.writeLine("```text");
-			await writer.write(renderTree(outputRoot));
+			await writer.write(renderTree(effectiveRoot));
 			await writer.writeLine("```");
 			await writer.writeLine("");
 			await writer.writeLine("---");
 			await writer.writeLine("");
 		}
 		
-		if (config.includeContents)
-			await writeMarkdownFiles(outputRoot, writer, config);
+		if (config.includeContents && fileNodes.length > 0)
+			await writeMarkdownFiles(fileNodes, writer, config);
 		
 		if (config.footer) {
 			await writer.writeLine("");
@@ -144,20 +149,18 @@ async function writeMarkdown(result: ScanResult, config: FlnConfig): Promise<voi
 }
 
 async function writeMarkdownFiles(
-	rootNode: FileNode,
+	fileNodes: FileNode[],
 	outputWriter: Awaited<ReturnType<typeof createOutputWriter>>,
 	renderConfig: FlnConfig
 ): Promise<void> {
 	await outputWriter.writeLine("## Source Files");
 	await outputWriter.writeLine("");
 	
-	const fileNodes = Array.from(iterateFileNodes(rootNode));
-	
 	for (let i = 0; i < fileNodes.length; i++) {
 		const node = fileNodes[i];
 		const language = getLanguageFromFilename(node.name);
 		const isLastFile = i === fileNodes.length - 1;
-		const filePath = join(renderConfig.rootDirectory, node.path);
+		const filePath = join(renderConfig.input, node.path);
 		
 		let fenceLength = 3;
 		if (!node.isBinary)
@@ -189,41 +192,41 @@ async function writeMarkdownFiles(
 }
 
 async function writeJson(result: ScanResult, config: FlnConfig): Promise<void> {
-	const writer = await createOutputWriter(config.outputFile, config.maximumTotalSizeBytes);
-	const outputRoot = filterSkippedNodes(result.root);
-	
-	if (!outputRoot)
-		throw new Error("Root directory was skipped.");
+	const writer = await createOutputWriter(config.output, config.maxTotalSize);
+	const { filtered: outputRoot, fileNodes } = filterAndCollectFileNodes(result.root);
+	const effectiveRoot = outputRoot ?? { ...result.root, children: [] };
 	
 	try {
 		await writer.write("{");
 		await writer.write(`"version":${JSON.stringify(VERSION)}`);
-		await writer.write(`,"generated":${JSON.stringify(config.generatedDate ?? formatDateTime())}`);
+		await writer.write(`,"generated":${JSON.stringify(config.date ?? formatDateTime())}`);
 		await writer.write(`,"projectName":${JSON.stringify(result.projectName)}`);
-		await writer.write(`,"rootDirectory":${JSON.stringify(config.rootDirectory)}`);
-		await writer.write(`,"stats":${JSON.stringify(result.stats)}`);
+		// TODO(major): remove rootDirectory from JSON output
+		await writer.write(`,"input":${JSON.stringify(config.input)}`);
+		await writer.write(`,"rootDirectory":${JSON.stringify(config.input)}`);
+		const { outputSizeBytes: _, outputTokenCount: __, ...statsForJson } = result.stats;
+		await writer.write(`,"stats":${JSON.stringify(statsForJson)}`);
 		await writer.write(`,"options":${JSON.stringify({
 			includeTree: config.includeTree,
 			includeContents: config.includeContents,
 			format: config.format,
-			maximumFileSizeBytes: config.maximumFileSizeBytes,
-			maximumTotalSizeBytes: config.maximumTotalSizeBytes,
+			maxFileSize: config.maxFileSize,
+			maxTotalSize: config.maxTotalSize,
 			includeHidden: config.includeHidden,
-			useGitignore: config.useGitignore,
+			gitignore: config.gitignore,
 			excludePatterns: config.excludePatterns,
 			includePatterns: config.includePatterns,
 			followSymlinks: config.followSymlinks,
 			banner: config.banner,
 			footer: config.footer
 		})}`);
-		await writer.write(`,"tree":${JSON.stringify(outputRoot)}`);
-		await writer.write(`,"stats":${JSON.stringify(result.stats)}`);
+		await writer.write(`,"tree":${JSON.stringify(effectiveRoot)}`);
 		
 		if (config.includeContents) {
 			await writer.write(",\"files\":[");
 			
 			let isFirst = true;
-			for (const node of iterateFileNodes(outputRoot)) {
+			for (const node of fileNodes) {
 				if (!isFirst)
 					await writer.write(",");
 				
@@ -234,14 +237,11 @@ async function writeJson(result: ScanResult, config: FlnConfig): Promise<void> {
 				await writer.write(`,"language":${JSON.stringify(getLanguageFromFilename(node.name))}`);
 				await writer.write(`,"isBinary":${JSON.stringify(Boolean(node.isBinary))}`);
 				
-				if (node.skipReason)
-					await writer.write(`,"skipReason":${JSON.stringify(node.skipReason)}`);
-				
-				if (node.isBinary || node.skipReason)
+				if (node.isBinary)
 					await writer.write(",\"content\":null");
 				else
 					try {
-						const filePath = join(config.rootDirectory, node.path);
+						const filePath = join(config.input, node.path);
 						const content = await readFile(filePath, "utf8");
 						
 						await writer.write(`,"content":${JSON.stringify(content)}`);

@@ -13,14 +13,34 @@ type OutputWriter = {
 };
 
 export async function createOutputWriter(
-	outputFile: string,
+	output: string,
 	maxSizeBytes = 0
 ): Promise<OutputWriter> {
-	const outputDirectory = dirname(outputFile);
+	if (output === "-") {
+		let bytesWritten = 0;
+		let totalTokenCount = 0;
+		const write = async (text: string): Promise<void> => { // eslint-disable-line @typescript-eslint/require-await
+			const textBytes = Buffer.byteLength(text);
+			if (maxSizeBytes > 0 && bytesWritten + textBytes > maxSizeBytes)
+				throw new Error(`Output size would exceed maximum of ${maxSizeBytes} bytes`);
+			bytesWritten += textBytes;
+			totalTokenCount += countTokens(text);
+			process.stdout.write(text);
+		};
+		
+		return {
+			write,
+			writeLine: (text: string) => write(`${text}\n`),
+			getStats: () => ({ sizeBytes: bytesWritten, tokenCount: totalTokenCount }),
+			close: async () => ({ sizeBytes: bytesWritten, tokenCount: totalTokenCount })// eslint-disable-line @typescript-eslint/require-await
+		};
+	}
+	
+	const outputDirectory = dirname(output);
 	if (outputDirectory !== ".")
 		await mkdir(outputDirectory, { recursive: true });
 	
-	const stream = createWriteStream(outputFile, { encoding: "utf8" });
+	const stream = createWriteStream(output, { encoding: "utf8" });
 	let bytesWritten = 0;
 	let totalTokenCount = 0;
 	

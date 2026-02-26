@@ -38,24 +38,24 @@ export type ProgressCallback = (current: number, total: number) => void;
 
 export type ScanOptions = {
 	projectName: string;
-	rootDirectory: string;
+	input: string;
 	excludePatterns: string[];
 	includePatterns: string[];
 	excludedPaths: string[];
 	includeHidden: boolean;
-	useGitignore: boolean;
-	maximumFileSizeBytes: number;
-	maximumTotalSizeBytes: number;
+	gitignore: boolean;
+	maxFileSize: number;
+	maxTotalSize: number;
 	followSymlinks: boolean;
 	onProgress?: ProgressCallback;
 };
 
 export type RenderOptions = {
-	outputFile: string;
+	output: string;
 	format: OutputFormat;
 	includeTree: boolean;
 	includeContents: boolean;
-	useAnsi: boolean;
+	ansi: boolean;
 	banner?: string;
 	footer?: string;
 };

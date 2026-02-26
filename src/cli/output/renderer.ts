@@ -1,7 +1,6 @@
 import type { FlnResult } from "../../api/index.js";
 import type { LogLevel } from "../../core/index.js";
 import {
-	ProgressBar,
 	renderBreakdown,
 	renderErrors,
 	renderSummary,
@@ -14,7 +13,7 @@ import { applyColor, colors, symbols } from "./styles.js";
 
 export type RendererOptions = {
 	logLevel: LogLevel;
-	useAnsi: boolean;
+	ansi: boolean;
 };
 
 export type SuccessData = {
@@ -31,11 +30,7 @@ export class OutputRenderer {
 	
 	constructor(options: RendererOptions) {
 		this.#logLevel = options.logLevel;
-		this.#useColors = options.useAnsi;
-	}
-	
-	createProgressBar(total: number): ProgressBar {
-		return new ProgressBar(total, this.#useColors);
+		this.#useColors = options.ansi;
 	}
 	
 	renderSuccess(data: SuccessData): void {

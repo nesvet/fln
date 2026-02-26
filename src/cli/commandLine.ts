@@ -1,6 +1,8 @@
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
+import ignore from "ignore";
 import { fln } from "../api/index.js";
+import { runInit } from "../config/index.js";
 import {
 	collectExtensionStats,
 	collectProcessedFiles,
@@ -8,11 +10,17 @@ import {
 	type FileNode
 } from "../core/index.js";
 import {
+	createProgressRenderer,
+	filterPathsUnderBase,
+	getChangedFilesSince,
 	getTerminalInfo,
 	incrementUsageCount,
 	shouldShowSponsorMessage,
-	shouldUseColors
+	shouldUseColors,
+	warnDeprecated
 } from "../infra/index.js";
+import { getNullishOutput, resolveFromBase } from "../path/index.js";
+import { normalizeIncludePattern } from "../pattern/index.js";
 import { VERSION } from "../version.js";
 import { formatHelpMessage } from "./help.js";
 import { OutputRenderer } from "./output/index.js";
@@ -44,6 +52,7 @@ export async function runCommandLine(): Promise<void> {
 			output: { type: "string", short: "o" },
 			exclude: { type: "string", short: "e", multiple: true },
 			include: { type: "string", short: "i", multiple: true },
+			ext: { type: "string" },
 			"include-hidden": { type: "boolean" },
 			"no-gitignore": { type: "boolean" },
 			"max-size": { type: "string" },
@@ -52,6 +61,7 @@ export async function runCommandLine(): Promise<void> {
 			"no-tree": { type: "boolean" },
 			format: { type: "string" },
 			"dry-run": { type: "boolean" },
+			stdout: { type: "boolean" },
 			overwrite: { type: "boolean", short: "w" },
 			quiet: { type: "boolean", short: "q" },
 			verbose: { type: "boolean", short: "V" },
@@ -59,9 +69,13 @@ export async function runCommandLine(): Promise<void> {
 			"no-ansi": { type: "boolean" },
 			"follow-symlinks": { type: "boolean" },
 			"no-sponsor-message": { type: "boolean" },
+			date: { type: "string" },
 			"generated-date": { type: "string" },
 			banner: { type: "string" },
+			"banner-file": { type: "string" },
 			footer: { type: "string" },
+			"footer-file": { type: "string" },
+			since: { type: "string" },
 			version: { type: "boolean", short: "v" },
 			help: { type: "boolean", short: "h" }
 		},
@@ -80,6 +94,11 @@ export async function runCommandLine(): Promise<void> {
 		process.exit(0);
 	}
 	
+	if (positionals[0] === "init") {
+		await runInit(values.overwrite ?? false);
+		process.exit(0);
+	}
+	
 	if (values.quiet && values.verbose)
 		throw new Error("Cannot use --quiet and --verbose together.");
 	
@@ -90,45 +109,86 @@ export async function runCommandLine(): Promise<void> {
 		throw new Error("Cannot use --verbose and --debug together.");
 	
 	const runCount = await incrementUsageCount();
-	const rootDirectory = resolve(process.cwd(), positionals[0] || ".");
+	const input = resolve(process.cwd(), positionals[0] || ".");
 	const isDryRun = values["dry-run"] ?? false;
+	const isStdout = values.stdout ?? false;
 	
-	const logLevel = values.quiet ? "silent" : values.debug ? "debug" : values.verbose ? "verbose" : "normal";
-	const useAnsi = shouldUseColors() && !values["no-ansi"];
+	const logLevel = (values.quiet || isStdout) ? "silent" : values.debug ? "debug" : values.verbose ? "verbose" : "normal";
+	const ansi = shouldUseColors() && !values["no-ansi"];
 	
-	const renderer = new OutputRenderer({ logLevel, useAnsi });
+	if (values["generated-date"] !== undefined && values.date === undefined)
+		warnDeprecated("--generated-date", "--date", "CLI");
 	
-	const progress = renderer.createProgressBar(100);
+	const date = values.date ?? values["generated-date"];
+	
+	const cwd = process.cwd();
+	const sincePatterns = values.since ?
+		filterPathsUnderBase(getChangedFilesSince(values.since, cwd), cwd, input) :
+		[];
+	const extPatterns = values.ext ?
+		values.ext.split(",").map(ext => `**/*.${ext.trim().replace(/^\./, "")}`).filter(Boolean) :
+		[];
+	const sinceFiltered = values.since && values.ext ?
+		(() => {
+			const normalized = extPatterns
+				.map(p => normalizeIncludePattern(p, input))
+				.filter((p): p is string => p !== null);
+			
+			if (normalized.length === 0)
+				return sincePatterns;
+			const extMatcher = ignore().add(normalized);
+			
+			return sincePatterns.filter(path => extMatcher.ignores(path));
+		})() :
+		sincePatterns;
+	if (values.since && sinceFiltered.length === 0 && !values.include?.length) {
+		const extSuffix = values.ext ? ` matching --ext ${values.ext}` : "";
+		console.info(`No changed files since ${values.since}${extSuffix}`);
+		process.exit(0);
+	}
+	const includePatterns = values.since && values.ext ?
+		[ ...sinceFiltered, ...(values.include ?? []) ] :
+		[ ...sinceFiltered, ...extPatterns, ...(values.include ?? []) ];
+	
+	const renderer = new OutputRenderer({ logLevel, ansi });
+	const progress = createProgressRenderer("🥞 Scanning...", ansi, (values.quiet ?? false) || isStdout);
 	const startTime = Date.now();
 	
+	progress.start();
 	const result = await fln({
-		rootDirectory,
-		outputFile: isDryRun ?
-			(process.platform === "win32" ? "nul" : "/dev/null") :
-			(values.output ? resolve(values.output) : undefined),
+		input,
+		ansi,
+		output: isDryRun ?
+			getNullishOutput() :
+			(isStdout ? "-" : (values.output ? resolveFromBase(values.output, cwd) : undefined)),
 		overwrite: values.overwrite,
 		excludePatterns: values.exclude,
-		includePatterns: values.include,
+		includePatterns:
+			includePatterns.length > 0 || values.since ?
+				includePatterns :
+				undefined,
 		includeHidden: values["include-hidden"],
-		useGitignore: values["no-gitignore"] ? false : undefined,
-		maximumFileSizeBytes: values["max-size"] ? parseByteSize(values["max-size"]) : undefined,
-		maximumTotalSizeBytes: values["max-total-size"] ? parseByteSize(values["max-total-size"]) : undefined,
+		gitignore: values["no-gitignore"] ? false : undefined,
+		maxFileSize: values["max-size"] ? parseByteSize(values["max-size"]) : undefined,
+		maxTotalSize: values["max-total-size"] ? parseByteSize(values["max-total-size"]) : undefined,
 		includeContents: values["no-contents"] ? false : undefined,
 		includeTree: values["no-tree"] ? false : undefined,
 		format: values.format as "json" | "md" | undefined,
 		followSymlinks: values["follow-symlinks"],
-		generatedDate: values["generated-date"],
+		date,
 		banner: values.banner,
+		bannerFile: values["banner-file"],
 		footer: values.footer,
-		onProgress: () => {
-			progress.increment();
+		footerFile: values["footer-file"],
+		onProgress: (current, total) => {
+			progress.update(current, total, "files");
 		},
 		logLevel
 	});
 	
 	const elapsedMs = Date.now() - startTime;
 	
-	progress.clear();
+	progress.cleanup();
 	
 	if (isDryRun && logLevel !== "silent")
 		console.info("Dry run mode — output was not written");

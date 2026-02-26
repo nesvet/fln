@@ -11,10 +11,10 @@ const names = readdirSync(examplesDir, { withFileTypes: true }).filter(entry => 
 
 for (const name of names)
 	await fln({
-		rootDirectory: join(examplesDir, name),
-		outputFile: join(examplesDir, `${name}.md`),
+		input: join(examplesDir, name),
+		output: join(examplesDir, `${name}.md`),
 		overwrite: true,
-		generatedDate: "2026-01-01 00:00"
+		date: "2026-02-26 00:00"
 	});
 
 console.info(`✓ Generated ${names.length} snapshot(s)`);

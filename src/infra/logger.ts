@@ -1,14 +1,10 @@
+import pc from "picocolors";
 import type { LogLevel } from "../core/index.js";
-import {
-	ansi,
-	getTerminalInfo,
-	renderBox,
-	symbols
-} from "./terminal.js";
+import { getTerminalInfo, renderBox, symbols } from "./terminal.js";
 
 
 type LoggerOptions = {
-	useAnsi: boolean;
+	ansi: boolean;
 	logLevel: LogLevel;
 };
 
@@ -25,17 +21,13 @@ export type Logger = {
 };
 
 export function createLogger(options: LoggerOptions): Logger {
-	const { useAnsi, logLevel } = options;
+	const { ansi: useAnsi, logLevel } = options;
 	const { width } = getTerminalInfo();
 	const isSilent = logLevel === "silent";
 	const isVerbose = logLevel === "verbose" || logLevel === "debug";
 	
-	const formatMessage = (symbol: string, color: string, message: string): string => {
-		if (!useAnsi)
-			return `${symbol} ${message}`;
-		
-		return `  ${color}${symbol}${ansi.reset} ${message}`;
-	};
+	const formatMessage = (symbolOrColored: string, message: string): string =>
+		`${useAnsi ? "  " : ""}${symbolOrColored} ${message}`;
 	
 	const writeInfo = (formatted: string) => {
 		if (!isSilent)
@@ -46,28 +38,28 @@ export function createLogger(options: LoggerOptions): Logger {
 		info: (message: string) => {
 			if (!isSilent)
 				if (useAnsi)
-					console.info(`  ${ansi.dim}${message}${ansi.reset}`);
+					console.info(`  ${pc.dim(message)}`);
 				else
 					console.info(message);
 		},
 		
 		success: (message: string) => {
-			writeInfo(formatMessage(symbols.check, ansi.green, message));
+			writeInfo(formatMessage(useAnsi ? pc.green(symbols.check) : symbols.check, message));
 		},
 		
 		warn: (message: string) => {
 			if (!isSilent)
-				console.warn(formatMessage(symbols.warning, ansi.yellow, message));
+				console.warn(formatMessage(useAnsi ? pc.yellow(symbols.warning) : symbols.warning, message));
 		},
 		
 		error: (message: string) => {
-			console.error(formatMessage(symbols.cross, ansi.red, message));
+			console.error(formatMessage(useAnsi ? pc.red(symbols.cross) : symbols.cross, message));
 		},
 		
 		debug: (message: string) => {
 			if (!isSilent && isVerbose)
 				if (useAnsi)
-					console.info(`  ${ansi.dim}${symbols.info} ${message}${ansi.reset}`);
+					console.info(`  ${pc.dim(`${symbols.info} ${message}`)}`);
 				else
 					console.info(`${symbols.info} ${message}`);
 		},
@@ -80,9 +72,9 @@ export function createLogger(options: LoggerOptions): Logger {
 				const boxWidth = Math.min(width - 4, 60);
 				const paddedText = text.padEnd(boxWidth - 4);
 				console.info("");
-				console.info(`${ansi.dim}${symbols.boxTopLeft}${symbols.boxHorizontal.repeat(boxWidth - 2)}${symbols.boxTopRight}${ansi.reset}`);
-				console.info(`${ansi.dim}${symbols.boxVertical}${ansi.reset}${ansi.bold}${paddedText}${ansi.reset} ${ansi.dim}${symbols.boxVertical}${ansi.reset}`);
-				console.info(`${ansi.dim}${symbols.boxBottomLeft}${symbols.boxHorizontal.repeat(boxWidth - 2)}${symbols.boxBottomRight}${ansi.reset}`);
+				console.info(pc.dim(`${symbols.boxTopLeft}${symbols.boxHorizontal.repeat(boxWidth - 2)}${symbols.boxTopRight}`));
+				console.info(`${pc.dim(symbols.boxVertical)}${pc.bold(paddedText)} ${pc.dim(symbols.boxVertical)}`);
+				console.info(pc.dim(`${symbols.boxBottomLeft}${symbols.boxHorizontal.repeat(boxWidth - 2)}${symbols.boxBottomRight}`));
 				console.info("");
 			} else {
 				console.info("");
@@ -97,7 +89,7 @@ export function createLogger(options: LoggerOptions): Logger {
 			
 			if (useAnsi) {
 				console.info("");
-				console.info(`${ansi.bold}${title}${ansi.reset}`);
+				console.info(pc.bold(title));
 				console.info("");
 			} else {
 				console.info("");
@@ -109,7 +101,7 @@ export function createLogger(options: LoggerOptions): Logger {
 			for (const [ key, value ] of Object.entries(items)) {
 				const paddedKey = key.padEnd(maxKeyLength);
 				if (useAnsi)
-					console.info(`  ${ansi.dim}${paddedKey}${ansi.reset}  ${value}`);
+					console.info(`  ${pc.dim(paddedKey)}  ${value}`);
 				else
 					console.info(`  ${paddedKey}  ${value}`);
 			}
@@ -124,7 +116,7 @@ export function createLogger(options: LoggerOptions): Logger {
 				title,
 				content,
 				width: boxWidth,
-				useAnsi,
+				ansi: useAnsi,
 				showDivider
 			});
 			

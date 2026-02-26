@@ -10,6 +10,9 @@ import { cpus } from "node:os";
 import { relative, sep } from "node:path";
 import type { Dirent } from "node:fs";
 import ignore from "ignore";
+import pLimit from "p-limit";
+import { toCanonicalRelative, toIgnoreSafePath, toPosixPath } from "../path/index.js";
+import { normalizeIncludePattern } from "../pattern/index.js";
 import type { Logger } from "../infra/index.js";
 import { IgnoreMatcher } from "./ignoreMatcher.js";
 import type {
@@ -20,13 +23,6 @@ import type {
 	SkipReason
 } from "./types.js";
 
-
-function normalizePathSegment(pathSegment: string): string {
-	if (sep === "/")
-		return pathSegment;
-	
-	return pathSegment.split(sep).join("/");
-}
 
 function getFileScore(fileName: string): number {
 	const lowerName = fileName.toLowerCase();
@@ -44,6 +40,7 @@ function getFileScore(fileName: string): number {
 		lowerName === "makefile" ||
 		lowerName === "dockerfile" ||
 		lowerName === "vcpkg.json" ||
+		lowerName === "pom.xml" ||
 		lowerName.startsWith(".env") ||
 		lowerName.includes(".config.") ||
 		lowerName.startsWith(".prettier") ||
@@ -93,38 +90,23 @@ function getFileScore(fileName: string): number {
 	return 10;
 }
 
-async function isBinaryFile(filePath: string, fileSize: number): Promise<boolean> {
+async function inspectFile(filePath: string, fileSize: number): Promise<{
+	isGenerated: boolean;
+	isBinary: boolean;
+}> {
 	if (fileSize === 0)
-		return false;
+		return { isGenerated: false, isBinary: false };
 	
 	const handle = await open(filePath, "r");
 	try {
 		const buffer = Buffer.alloc(Math.min(512, fileSize));
 		const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+		const header = buffer.toString("utf8", 0, Math.min(100, bytesRead));
 		
-		for (let index = 0; index < bytesRead; index++)
-			if (buffer[index] === 0)
-				return true;
+		const isGenerated = header.includes("<!-- 🥞 fln");
+		const isBinary = !isGenerated && buffer.slice(0, bytesRead).includes(0);
 		
-		return false;
-	} finally {
-		await handle.close();
-	}
-}
-
-async function isGeneratedFile(filePath: string, fileSize: number): Promise<boolean> {
-	if (fileSize === 0)
-		return false;
-	
-	const handle = await open(filePath, "r");
-	try {
-		const buffer = Buffer.alloc(Math.min(100, fileSize));
-		const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
-		const content = buffer.toString("utf8", 0, bytesRead);
-		
-		return content.includes("<!-- 🥞 fln");
-	} catch {
-		return false;
+		return { isGenerated, isBinary };
 	} finally {
 		await handle.close();
 	}
@@ -142,14 +124,22 @@ export async function scanTree(options: ScanOptions, logger: Logger): Promise<Sc
 		outputTokenCount: 0
 	};
 	const ignoreMatcher = new IgnoreMatcher({
-		rootDirectory: options.rootDirectory,
+		input: options.input,
 		excludePatterns: options.excludePatterns,
-		useGitignore: options.useGitignore,
+		gitignore: options.gitignore,
 		logger
 	});
-	const includeMatcher = ignore().add(options.includePatterns);
+	const normalizedIncludePatterns = options.includePatterns
+		.map(pattern => normalizeIncludePattern(pattern, options.input))
+		.filter((p): p is string => p !== null);
+	const includeMatcher = ignore().add(normalizedIncludePatterns);
 	const concurrencyLimit = Math.max(8, Math.min(64, cpus().length * 4));
-	const excludedPathSet = new Set(options.excludedPaths.map(pathItem => normalizePathSegment(pathItem)));
+	const limit = pLimit(concurrencyLimit);
+	const excludedPathSet = new Set(
+		options.excludedPaths
+			.map(path => toCanonicalRelative(path, options.input))
+			.filter((p): p is string => p !== null && p !== "")
+	);
 	const visitedRealPaths = new Set<string>();
 	
 	let processedItems = 0;
@@ -157,29 +147,42 @@ export async function scanTree(options: ScanOptions, logger: Logger): Promise<Sc
 	
 	if (options.followSymlinks)
 		try {
-			const rootRealPath = await realpath(options.rootDirectory);
+			const rootRealPath = await realpath(options.input);
 			visitedRealPaths.add(rootRealPath);
 		} catch {
 			logger.debug("Failed to resolve root real path.");
 		}
 	
-	const rootNode = await scanEntry(options.rootDirectory, "");
+	const rootNode = await scanEntry(options.input, "");
 	if (!rootNode || rootNode.type !== "directory")
 		throw new Error("Root directory is empty or all files were excluded.");
 	
 	return { projectName: options.projectName, root: rootNode, stats };
 	
 	async function scanEntry(currentPath: string, relativePath: string, dirent?: Dirent): Promise<FileNode | undefined> {
-		const normalizedRelativePath = normalizePathSegment(relativePath);
+		const normalizedRelativePath = toPosixPath(relativePath);
 		const name = dirent?.name ?? currentPath.split(sep).pop() ?? "";
 		
 		if (normalizedRelativePath !== "" && excludedPathSet.has(normalizedRelativePath))
 			return undefined;
 		
-		const isExplicitlyIncluded = normalizedRelativePath !== "" && includeMatcher.ignores(normalizedRelativePath);
-		const pathForIgnoreCheck = normalizedRelativePath === "" ? "" : (dirent?.isDirectory() ? `${normalizedRelativePath}/` : normalizedRelativePath);
+		const pathForCheck = normalizedRelativePath === "" ? "" : (dirent?.isDirectory() ? `${normalizedRelativePath}/` : normalizedRelativePath);
+		const safePath = toIgnoreSafePath(pathForCheck, options.input);
+		const isExplicitlyIncluded =
+			safePath !== null &&
+			safePath !== "" &&
+			includeMatcher.ignores(safePath);
 		
-		if (!isExplicitlyIncluded && pathForIgnoreCheck !== "" && ignoreMatcher.ignores(pathForIgnoreCheck))
+		const isDirectory = pathForCheck.endsWith("/");
+		if (
+			normalizedIncludePatterns.length > 0 &&
+			!isExplicitlyIncluded &&
+			pathForCheck !== "" &&
+			!isDirectory
+		)
+			return undefined;
+		
+		if (!isExplicitlyIncluded && pathForCheck !== "" && ignoreMatcher.ignoresSafePath(safePath))
 			return undefined;
 		
 		if (!options.includeHidden && name.startsWith(".") && name !== ".")
@@ -341,22 +344,26 @@ export async function scanTree(options: ScanOptions, logger: Logger): Promise<Sc
 			options.onProgress(processedItems, Math.max(totalEstimate, processedItems));
 		
 		let skipReason: SkipReason | undefined;
-		
-		if (!input.isExplicitlyIncluded && await isGeneratedFile(input.currentPath, input.fileSize))
-			skipReason = "generated";
-		
-		if (!skipReason && input.fileSize > options.maximumFileSizeBytes)
-			skipReason = "tooLarge";
-		
 		let isBinary = false;
-		if (!skipReason)
+		
+		const needsRead = input.fileSize > 0 &&
+			(input.fileSize <= options.maxFileSize || !input.isExplicitlyIncluded);
+		
+		if (needsRead)
 			try {
-				isBinary = await isBinaryFile(input.currentPath, input.fileSize);
+				const { isGenerated, isBinary: binary } = await inspectFile(input.currentPath, input.fileSize);
+				if (!input.isExplicitlyIncluded && isGenerated)
+					skipReason = "generated";
+				isBinary = binary;
 			} catch (error) {
 				stats.errors++;
 				skipReason = "readError";
 				logger.warn(`Failed to read ${input.normalizedRelativePath || "."}: ${String(error)}`);
 			}
+		
+		
+		if (!skipReason && input.fileSize > options.maxFileSize)
+			skipReason = "tooLarge";
 		
 		if (isBinary)
 			stats.binary++;
@@ -400,12 +407,14 @@ export async function scanTree(options: ScanOptions, logger: Logger): Promise<Sc
 		
 		totalEstimate = Math.max(totalEstimate, processedItems + entries.length);
 		
-		const children = (await mapWithConcurrency(entries, concurrencyLimit, async entry => {
-			const childPath = `${input.currentPath}${sep}${entry.name}`;
-			const childRelativePath = relative(options.rootDirectory, childPath);
-			
-			return scanEntry(childPath, childRelativePath, entry);
-		}))
+		const children = (await Promise.all(
+			entries.map(entry => limit(() => {
+				const childPath = `${input.currentPath}${sep}${entry.name}`;
+				const childRelativePath = relative(options.input, childPath);
+				
+				return scanEntry(childPath, childRelativePath, entry);
+			}))
+		))
 			.filter((node): node is FileNode => node !== undefined)
 			.sort((left, right) => {
 				if (left.type !== right.type)
@@ -431,39 +440,4 @@ export async function scanTree(options: ScanOptions, logger: Logger): Promise<Sc
 			target: input.symlinkTarget
 		};
 	}
-}
-
-async function mapWithConcurrency<T, Result>(
-	items: T[],
-	concurrency: number,
-	mapper: (item: T) => Promise<Result>
-): Promise<Result[]> {
-	if (items.length === 0)
-		return [];
-	
-	const limit = Math.max(1, Math.min(concurrency, items.length));
-	if (limit === 1) {
-		const results: Result[] = [];
-		for (const item of items)
-			results.push(await mapper(item));
-		
-		return results;
-	}
-	
-	const results = new Array<Result>(items.length);
-	let nextIndex = 0;
-	
-	const workers = Array.from({ length: limit }, async () => {
-		while (true) {
-			const currentIndex = nextIndex++;
-			if (currentIndex >= items.length)
-				return;
-			
-			results[currentIndex] = await mapper(items[currentIndex]);
-		}
-	});
-	
-	await Promise.all(workers);
-	
-	return results;
 }

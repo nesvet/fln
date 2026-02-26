@@ -1,14 +1,20 @@
-import { constants } from "node:fs";
-import { access, readFile } from "node:fs/promises";
-import { join, relative, sep } from "node:path";
+import { readFile } from "node:fs/promises";
+import { join, relative } from "node:path";
 import ignore from "ignore";
+import {
+	stripLeadingDotSlash,
+	toDisplayPath,
+	toIgnoreSafePath,
+	toPosixPath
+} from "../path/index.js";
+import { normalizeExcludePattern } from "../pattern/index.js";
 import type { Logger } from "../infra/index.js";
 
 
 type IgnoreMatcherOptions = {
-	rootDirectory: string;
+	input: string;
 	excludePatterns: string[];
-	useGitignore: boolean;
+	gitignore: boolean;
 	logger?: Logger;
 };
 
@@ -25,15 +31,6 @@ const defaultIgnorePatterns = [
 	"pnpm-lock.yaml"
 ];
 
-function normalizeRelativePath(relativePath: string): string {
-	const normalized = relativePath.split(sep).join("/");
-	
-	if (normalized.startsWith("./"))
-		return normalized.slice(2);
-	
-	return normalized;
-}
-
 function convertGitignorePattern(pattern: string, relativeDirectory: string): string | undefined {
 	const trimmed = pattern.trim();
 	if (trimmed === "" || trimmed.startsWith("#"))
@@ -43,7 +40,7 @@ function convertGitignorePattern(pattern: string, relativeDirectory: string): st
 	const rawPattern = isEscaped ? trimmed.slice(1) : trimmed;
 	const isNegated = !isEscaped && rawPattern.startsWith("!");
 	const patternBody = isNegated ? rawPattern.slice(1) : rawPattern;
-	const normalizedDirectory = normalizeRelativePath(relativeDirectory);
+	const normalizedDirectory = stripLeadingDotSlash(toPosixPath(relativeDirectory));
 	const prefix = normalizedDirectory === "" ? "" : `${normalizedDirectory}/`;
 	
 	if (patternBody === "")
@@ -63,44 +60,44 @@ function convertGitignorePattern(pattern: string, relativeDirectory: string): st
 	return isNegated ? `!${convertedPattern}` : convertedPattern;
 }
 
-function normalizeExcludePattern(pattern: string): string {
-	const normalized = pattern.trim();
-	const isNegated = normalized.startsWith("!");
-	const body = isNegated ? normalized.slice(1) : normalized;
-	const trimmedTrailingSlash = body.endsWith("/") ? body.slice(0, -1) : body;
-	
-	if (body.startsWith("/"))
-		return isNegated ? `!${body.slice(1)}` : body.slice(1);
-	
-	const result = trimmedTrailingSlash.includes("/") ? body : `**/${body}`;
-	
-	return isNegated ? `!${result}` : result;
-}
-
 export class IgnoreMatcher {
-	#rootDirectory: string;
-	#useGitignore: boolean;
+	#input: string;
+	#gitignore: boolean;
 	#logger?: Logger;
 	#processedGitignore = new Set<string>();
 	#matcher = ignore();
 	
 	constructor(options: IgnoreMatcherOptions) {
-		this.#rootDirectory = options.rootDirectory;
-		this.#useGitignore = options.useGitignore;
+		this.#input = options.input;
+		this.#gitignore = options.gitignore;
 		this.#logger = options.logger;
 		
-		this.#matcher.add(defaultIgnorePatterns.map(pattern => normalizeExcludePattern(pattern)));
-		this.#matcher.add(options.excludePatterns.map(pattern => normalizeExcludePattern(pattern)));
+		const defaultPatterns = defaultIgnorePatterns
+			.map(pattern => normalizeExcludePattern(pattern, this.#input))
+			.filter((p): p is string => p !== null);
+		this.#matcher.add(defaultPatterns);
+		
+		const userPatterns = options.excludePatterns
+			.map(pattern => normalizeExcludePattern(pattern, this.#input))
+			.filter((p): p is string => p !== null);
+		this.#matcher.add(userPatterns);
 	}
 	
 	public ignores(relativePath: string): boolean {
-		const normalized = normalizeRelativePath(relativePath);
+		const safe = toIgnoreSafePath(relativePath, this.#input);
 		
-		return normalized !== "" && this.#matcher.ignores(normalized);
+		return this.ignoresSafePath(safe);
+	}
+	
+	public ignoresSafePath(safePath: string | null): boolean {
+		if (safePath === null || safePath === "")
+			return false;
+		
+		return this.#matcher.ignores(safePath);
 	}
 	
 	public async addGitignoreForDirectory(directoryPath: string): Promise<void> {
-		if (!this.#useGitignore)
+		if (!this.#gitignore)
 			return;
 		
 		if (this.#processedGitignore.has(directoryPath))
@@ -109,15 +106,17 @@ export class IgnoreMatcher {
 		this.#processedGitignore.add(directoryPath);
 		
 		const gitignorePath = join(directoryPath, ".gitignore");
-		const relativeDirectory = relative(this.#rootDirectory, directoryPath);
+		const relativeDirectory = relative(this.#input, directoryPath);
 		
+		let content: string;
 		try {
-			await access(gitignorePath, constants.F_OK);
-		} catch {
+			content = await readFile(gitignorePath, "utf8");
+		} catch (error) {
+			if ((error as { code?: string }).code !== "ENOENT")
+				this.#logger?.debug(`Failed to read .gitignore at ${gitignorePath}: ${String(error)}`);
+			
 			return;
 		}
-		
-		const content = await readFile(gitignorePath, "utf8");
 		const patterns = content
 			.split("\n")
 			.map(line => convertGitignorePattern(line, relativeDirectory))
@@ -125,7 +124,7 @@ export class IgnoreMatcher {
 		
 		if (patterns.length > 0) {
 			this.#matcher.add(patterns);
-			this.#logger?.debug(`Loaded ${patterns.length} patterns from ${normalizeRelativePath(relativeDirectory) || "."}/.gitignore`);
+			this.#logger?.debug(`Loaded ${patterns.length} patterns from ${toDisplayPath(relativeDirectory, this.#input)}/.gitignore`);
 		}
 	}
 }

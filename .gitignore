@@ -4,3 +4,7 @@ src/version.ts
 node_modules/
 dist/
 fln
+fln-*.md
+output.md
+output-*.md
+docs/

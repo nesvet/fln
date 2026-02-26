@@ -1,4 +1,5 @@
-import { relative, resolve, sep } from "node:path";
+import { readFile, stat } from "node:fs/promises";
+import { resolve } from "node:path";
 import {
 	defaultConfigFileName,
 	getProjectMetadata,
@@ -8,7 +9,8 @@ import {
 	resolveOutputPath
 } from "../config/index.js";
 import { parseByteSize, scanTree, writeOutput } from "../core/index.js";
-import { createLogger } from "../infra/index.js";
+import { createLogger, resolveOption, symbols } from "../infra/index.js";
+import { resolveFromBase, toCanonicalRelative } from "../path/index.js";
 import type { FlnOptions, FlnResult } from "./types.js";
 
 /**
@@ -19,8 +21,8 @@ import type { FlnOptions, FlnResult } from "./types.js";
  * import { fln } from "fln";
  *
  * const result = await fln({
- *   rootDirectory: "./src",
- *   outputFile: "output.md",
+ *   input: "./src",
+ *   output: "output.md",
  *   excludePatterns: ["*.test.ts"],
  *   onProgress: (current, total) => {
  *     console.log(`Progress: ${current}/${total}`);
@@ -33,72 +35,120 @@ import type { FlnOptions, FlnResult } from "./types.js";
  * ```
  */
 export async function fln(options: FlnOptions = {}): Promise<FlnResult> {
-	const rootDirectory = resolve(options.rootDirectory ?? process.cwd());
+	// TODO(major): remove rootDirectory fallback
+	const input = resolve(options.input ?? options.rootDirectory ?? process.cwd());
+	const inputStats = await stat(input);
+	if (!inputStats.isDirectory())
+		throw new Error(`Input must be a directory, got file: ${input}`);
 	
-	const projectMetadata = await getProjectMetadata(rootDirectory);
+	const projectMetadata = await getProjectMetadata(input);
 	
-	const configFilePath = resolve(rootDirectory, defaultConfigFileName);
+	const configFilePath = resolve(input, defaultConfigFileName);
 	
-	const fileConfig = normalizeConfigFile(await loadConfigFile(configFilePath));
+	const { config: rawFileConfig, loaded: configLoaded, parseError } = await loadConfigFile(configFilePath);
+	if (parseError)
+		console.warn(parseError);
+	
+	const fileConfig = normalizeConfigFile(rawFileConfig);
 	
 	const format: "json" | "md" = options.format ?? (fileConfig.format as "json" | "md" | undefined) ?? "md";
 	const overwrite = options.overwrite ?? fileConfig.overwrite ?? false;
 	
-	const outputValue = options.outputFile ?? fileConfig.outputFile;
-	const outputFile = await resolveOutputPath(
-		outputValue ? resolve(outputValue) : undefined,
-		rootDirectory,
+	// TODO(major): remove outputFile fallback
+	const outputValue = options.output ?? options.outputFile ?? fileConfig.output;
+	const output = await resolveOutputPath(
+		outputValue === "-" ? "-" : (outputValue ? resolveFromBase(outputValue, input) : undefined),
+		input,
+		projectMetadata,
 		overwrite,
 		format
 	);
 	
+	const gitignore = resolveOption<boolean>(options, "gitignore", "useGitignore", "API");
+	const maxFileSize = resolveOption<number | string>(options, "maxFileSize", "maximumFileSizeBytes", "API");
+	const maxTotalSize = resolveOption<number | string>(options, "maxTotalSize", "maximumTotalSizeBytes", "API");
+	const date = resolveOption<string>(options, "date", "generatedDate", "API");
+	const ansi = resolveOption<boolean>(options, "ansi", "useAnsi", "API") ?? false;
+	
 	const userConfig = {
-		outputFile,
+		output,
 		overwrite: options.overwrite,
 		excludePatterns: options.excludePatterns,
 		includePatterns: options.includePatterns,
 		includeHidden: options.includeHidden,
-		useGitignore: options.useGitignore,
-		maximumFileSizeBytes: typeof options.maximumFileSizeBytes === "string" ?
-			parseByteSize(options.maximumFileSizeBytes) :
-			options.maximumFileSizeBytes,
-		maximumTotalSizeBytes: typeof options.maximumTotalSizeBytes === "string" ?
-			parseByteSize(options.maximumTotalSizeBytes) :
-			options.maximumTotalSizeBytes,
+		gitignore,
+		maxFileSize: maxFileSize === undefined ?
+			undefined :
+			(typeof maxFileSize === "string" ? parseByteSize(maxFileSize) : maxFileSize),
+		maxTotalSize: maxTotalSize === undefined ?
+			undefined :
+			(typeof maxTotalSize === "string" ? parseByteSize(maxTotalSize) : maxTotalSize),
 		includeContents: options.includeContents,
 		includeTree: options.includeTree,
 		format,
 		followSymlinks: options.followSymlinks,
-		useAnsi: false,
+		ansi,
 		logLevel: options.logLevel ?? "silent",
-		generatedDate: options.generatedDate,
+		date,
 		banner: options.banner,
-		footer: options.footer
+		bannerFile: options.bannerFile,
+		footer: options.footer,
+		footerFile: options.footerFile
 	};
 	
-	const config = resolveConfig(rootDirectory, fileConfig, userConfig);
+	const config = resolveConfig(input, fileConfig, userConfig);
 	
-	const outputRelativePath = relative(rootDirectory, config.outputFile);
-	const outputRelativeNormalized = outputRelativePath.split(sep).join("/");
+	const outputCanonical = config.output === "-" ? null : toCanonicalRelative(config.output, input);
+	if (outputCanonical && outputCanonical !== "")
+		config.excludedPaths = [ outputCanonical ];
 	
-	if (outputRelativeNormalized !== "" && !outputRelativeNormalized.startsWith("../") && outputRelativeNormalized !== "..")
-		config.excludedPaths = [ outputRelativeNormalized ];
-	
-	if (!config.includeContents) {
-		config.maximumFileSizeBytes = Number.MAX_SAFE_INTEGER;
-		config.maximumTotalSizeBytes = 0;
+	async function resolveBannerFooterFile(
+		filePath: string | undefined
+	): Promise<{ content: string; excludedPath?: string }> {
+		if (filePath) {
+			const absolutePath = resolveFromBase(filePath, input);
+			const content = await readFile(absolutePath, "utf8");
+			const excludedPath = toCanonicalRelative(absolutePath, input) ?? undefined;
+			
+			return { content, excludedPath };
+		}
+		
+		return { content: "" };
 	}
 	
-	if (config.maximumFileSizeBytes <= 0)
+	const [ bannerFileResult, footerFileResult ] = await Promise.all([
+		resolveBannerFooterFile(config.bannerFile),
+		resolveBannerFooterFile(config.footerFile)
+	]);
+	
+	const bannerParts = [ config.banner, bannerFileResult.content ].filter(Boolean) as string[];
+	const footerParts = [ config.footer, footerFileResult.content ].filter(Boolean) as string[];
+	config.banner = bannerParts.length > 0 ? bannerParts.join("\n\n") : undefined;
+	config.footer = footerParts.length > 0 ? footerParts.join("\n\n") : undefined;
+	
+	if (bannerFileResult.excludedPath)
+		config.excludedPaths.push(bannerFileResult.excludedPath);
+	if (footerFileResult.excludedPath)
+		config.excludedPaths.push(footerFileResult.excludedPath);
+	
+	if (!config.includeContents) {
+		config.maxFileSize = Number.MAX_SAFE_INTEGER;
+		config.maxTotalSize = 0;
+	}
+	
+	if (config.maxFileSize <= 0)
 		throw new Error("Max file size must be greater than 0.");
 	
-	if (config.maximumTotalSizeBytes < 0)
+	if (config.maxTotalSize < 0)
 		throw new Error("Max total size must be 0 or greater.");
 	
 	const logger = createLogger({
-		useAnsi: config.useAnsi,
+		ansi: config.ansi,
 		logLevel: config.logLevel
 	});
+	
+	if (configLoaded)
+		logger.info(`${symbols.info} Using config: ${defaultConfigFileName}`);
 	
 	const result = await scanTree({
 		projectName: projectMetadata.name,
@@ -118,7 +168,7 @@ export async function fln(options: FlnOptions = {}): Promise<FlnResult> {
 		totalSizeBytes: result.stats.totalSizeBytes,
 		outputSizeBytes: result.stats.outputSizeBytes,
 		outputTokenCount: result.stats.outputTokenCount,
-		outputPath: config.outputFile,
+		outputPath: config.output,
 		_root: result.root
 	};
 }

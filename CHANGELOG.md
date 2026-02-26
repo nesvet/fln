@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-02-26
+
+### Removed (Breaking)
+
+- Public API reduced to `fln`, `FlnOptions`, `FlnResult`, `LogLevel`, `ProgressCallback`. Removed exports: `scanTree`, `writeOutput`, `renderTree`, `IgnoreMatcher`, `parseByteSize`, `formatByteSize`, `formatTokenCount`, `collectExtensionStats`, `collectProcessedFiles`, core types (`FileNode`, `ScanResult`, etc.), `VERSION`.
+
+### Added
+
+- New option names: `input` (replaces `rootDirectory`), `output` (replaces `outputFile`), `maxFileSize`, `maxTotalSize`, `date`, `gitignore`, `ansi` (API, config, CLI)
+- JSON output now includes `input` field (in addition to `rootDirectory` for backward compatibility)
+- `bannerFile` — path to file whose contents are prepended to output (file excluded from tree)
+- `footerFile` — path to file whose contents are appended to output (file excluded from tree)
+- New CLI features: `fln init`, `--stdout`, `--ext`, `--since`
+- New CLI flags: `--date`, `--banner-file`, `--footer-file`
+- Config schema and `fln init` template (`$schema`) for `.fln.json`
+
+### Changed
+
+- JSON output `options` object now uses `maxFileSize`, `maxTotalSize`, `gitignore` (old names deprecated)
+- Output now supports stdout target (`-`) and auto-adds extension (`.md`/`.json`) when missing
+- Banner/footer content now combines inline text with file-based content
+- Project metadata detection now also supports `pom.xml`
+
+### Fixed
+
+- `excludePatterns` and `includePatterns` now normalize leading `./` and safely ignore paths resolving outside input (for example, `../...`)
+- Windows ARM64 binary release target corrected in release workflow
+
+### Deprecated
+
+- `rootDirectory` — use `input` instead. Will be removed in 2.0.
+- `outputFile` — use `output` instead (in API options and `.fln.json`). Will be removed in 2.0.
+- `maximumFileSizeBytes` — use `maxFileSize` instead. Will be removed in 2.0.
+- `maximumTotalSizeBytes` — use `maxTotalSize` instead. Will be removed in 2.0.
+- `generatedDate` — use `date` instead. Will be removed in 2.0.
+- `useGitignore` — use `gitignore` instead. Will be removed in 2.0.
+- `useAnsi` — use `ansi` instead. Will be removed in 2.0.
+- CLI `--generated-date` — use `--date` instead. Will be removed in 2.0.
+- JSON output field `rootDirectory` — use `input` instead. Will be removed in 2.0.
+
 ## [1.1.3] - 2026-02-12
 
 ### Fixed
@@ -75,7 +115,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cross-platform shell installers with SHA256 verification (macOS, Linux, Windows)
 - Comprehensive test suite
 
-[Unreleased]: https://github.com/nesvet/fln/compare/1.1.3...HEAD
+[Unreleased]: https://github.com/nesvet/fln/compare/1.2.0...HEAD
+[1.2.0]: https://github.com/nesvet/fln/compare/1.1.3...1.2.0
 [1.1.3]: https://github.com/nesvet/fln/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/nesvet/fln/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/nesvet/fln/compare/1.0.0...1.1.1

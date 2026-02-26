@@ -1,19 +1,30 @@
-import type { LogLevel, ProgressCallback } from "../core/index.js";
+export type LogLevel = "debug" | "normal" | "silent" | "verbose";
 
+export type ProgressCallback = (current: number, total: number) => void;
 
 /**
  * Configuration options for fln function
  */
 export type FlnOptions = {
 	/**
-	 * Root directory to scan
+	 * Directory to flatten (input)
 	 * @default process.cwd()
 	 */
-	rootDirectory?: string;
+	input?: string;
 	
 	/**
 	 * Output file path or directory
 	 * @default Auto-generated from project metadata (e.g., "my-app-1.0.0.md")
+	 */
+	output?: string;
+	
+	/**
+	 * @deprecated Use input. Remove in next major.
+	 */
+	rootDirectory?: string;
+	
+	/**
+	 * @deprecated Use output. Remove in next major.
 	 */
 	outputFile?: string;
 	
@@ -45,17 +56,32 @@ export type FlnOptions = {
 	 * Use .gitignore rules for filtering
 	 * @default true
 	 */
+	gitignore?: boolean;
+	
+	/**
+	 * @deprecated Use gitignore. Remove in next major.
+	 */
 	useGitignore?: boolean;
 	
 	/**
 	 * Maximum individual file size (bytes or string like "10mb")
 	 * @default 10485760 (10 MB)
 	 */
+	maxFileSize?: number | string;
+	
+	/**
+	 * @deprecated Use maxFileSize. Remove in next major.
+	 */
 	maximumFileSizeBytes?: number | string;
 	
 	/**
 	 * Maximum total size for all included files (bytes or string like "100mb")
 	 * @default 0 (unlimited)
+	 */
+	maxTotalSize?: number | string;
+	
+	/**
+	 * @deprecated Use maxTotalSize. Remove in next major.
 	 */
 	maximumTotalSizeBytes?: number | string;
 	
@@ -86,6 +112,11 @@ export type FlnOptions = {
 	/**
 	 * Date string for the "Generated" header (format: YYYY-MM-DD HH:mm). If omitted, current date is used.
 	 */
+	date?: string;
+	
+	/**
+	 * @deprecated Use date. Remove in next major.
+	 */
 	generatedDate?: string;
 	
 	/**
@@ -94,9 +125,19 @@ export type FlnOptions = {
 	banner?: string;
 	
 	/**
+	 * Path to file whose contents are prepended to output (relative to input). File is excluded from tree.
+	 */
+	bannerFile?: string;
+	
+	/**
 	 * Custom footer text at the end of output
 	 */
 	footer?: string;
+	
+	/**
+	 * Path to file whose contents are appended to output (relative to input). File is excluded from tree.
+	 */
+	footerFile?: string;
 	
 	/**
 	 * Progress callback function
@@ -110,6 +151,17 @@ export type FlnOptions = {
 	 * @default "silent"
 	 */
 	logLevel?: LogLevel;
+	
+	/**
+	 * Use ANSI colors in log output
+	 * @default false (for programmatic use)
+	 */
+	ansi?: boolean;
+	
+	/**
+	 * @deprecated Use ansi. Remove in next major.
+	 */
+	useAnsi?: boolean;
 };
 
 /**

@@ -1,3 +1,1 @@
 export * from "./api/index.js";
-export * from "./core/index.js";
-export * from "./version.js";

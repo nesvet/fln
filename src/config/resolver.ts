@@ -1,28 +1,28 @@
 import { parseByteSize, type OutputFormat } from "../core/index.js";
-import { parseGeneratedDate } from "../infra/index.js";
-import { defaultMaximumFileSizeBytes } from "./defaults.js";
+import { parseGeneratedDate, resolveOption } from "../infra/index.js";
+import { defaultMaxFileSize } from "./defaults.js";
 import type { FlnConfig, RawConfigFile } from "./types.js";
 
 
 type ConfigOverrides = Partial<Pick<
 	FlnConfig,
+	"ansi" |
 	"banner" |
+	"date" |
 	"excludePatterns" |
 	"followSymlinks" |
 	"footer" |
-	"generatedDate" |
+	"gitignore" |
 	"includeContents" |
 	"includeHidden" |
 	"includePatterns" |
 	"includeTree" |
 	"logLevel" |
-	"maximumFileSizeBytes" |
-	"maximumTotalSizeBytes" |
-	"outputFile" |
-	"overwrite" |
-	"useAnsi" |
-	"useGitignore"
->> & Partial<{ format: string }>;
+	"maxFileSize" |
+	"maxTotalSize" |
+	"output" |
+	"overwrite"
+>> & Partial<{ bannerFile: string; format: string; footerFile: string; outputFile: string }>; // outputFile: TODO(major): remove
 
 function parseOptionalSize(value: number | string | undefined): number | undefined {
 	if (value === undefined)
@@ -39,42 +39,57 @@ function getDefaultOutputFile(format: OutputFormat): string {
 	return format === "json" ? "output.json" : "output.md";
 }
 
-
 export function normalizeConfigFile(fileConfig: RawConfigFile): ConfigOverrides {
+	// TODO(major): remove outputFile fallback
+	const output = fileConfig.output ?? fileConfig.outputFile;
+	
+	const gitignore = resolveOption<boolean>(fileConfig, "gitignore", "useGitignore", "config file");
+	const maxFileSize = resolveOption(fileConfig, "maxFileSize", "maximumFileSizeBytes", "config file", v =>
+		parseOptionalSize(v as number | string | undefined)
+	);
+	const maxTotalSize = resolveOption(fileConfig, "maxTotalSize", "maximumTotalSizeBytes", "config file", v =>
+		parseOptionalSize(v as number | string | undefined)
+	);
+	const ansi = resolveOption<boolean>(fileConfig, "ansi", "useAnsi", "config file");
+	const date = resolveOption<string>(fileConfig, "date", "generatedDate", "config file");
+	
 	return {
-		outputFile: fileConfig.outputFile,
+		output,
 		overwrite: fileConfig.overwrite,
 		excludePatterns: fileConfig.excludePatterns,
 		includePatterns: fileConfig.includePatterns,
 		includeHidden: fileConfig.includeHidden,
-		useGitignore: fileConfig.useGitignore,
-		maximumFileSizeBytes: parseOptionalSize(fileConfig.maximumFileSizeBytes),
-		maximumTotalSizeBytes: parseOptionalSize(fileConfig.maximumTotalSizeBytes),
+		gitignore,
+		maxFileSize,
+		maxTotalSize,
 		includeTree: fileConfig.includeTree,
 		includeContents: fileConfig.includeContents,
 		format: fileConfig.format,
 		followSymlinks: fileConfig.followSymlinks,
-		useAnsi: fileConfig.useAnsi,
+		ansi,
 		logLevel: fileConfig.logLevel,
-		generatedDate: fileConfig.generatedDate,
+		date,
 		banner: fileConfig.banner,
-		footer: fileConfig.footer
+		bannerFile: fileConfig.bannerFile,
+		footer: fileConfig.footer,
+		footerFile: fileConfig.footerFile
 	};
 }
 
 export function resolveConfig(
-	rootDirectory: string,
+	input: string,
 	fileConfig: ConfigOverrides,
 	userConfig: ConfigOverrides
 ): FlnConfig {
 	const format = resolveFormat(userConfig.format ?? fileConfig.format);
-	const outputFile = userConfig.outputFile ?? fileConfig.outputFile ?? getDefaultOutputFile(format);
-	const rawGeneratedDate = userConfig.generatedDate ?? fileConfig.generatedDate;
-	const generatedDate = rawGeneratedDate === undefined ? undefined : parseGeneratedDate(rawGeneratedDate);
+	// TODO(major): remove outputFile fallback
+	const output = userConfig.output ?? userConfig.outputFile ?? fileConfig.output ?? fileConfig.outputFile ?? getDefaultOutputFile(format);
+	const rawDate = userConfig.date ?? fileConfig.date;
+	const date = rawDate === undefined ? undefined : parseGeneratedDate(rawDate);
 	
 	return {
-		rootDirectory,
-		outputFile,
+		input,
+		output,
 		overwrite: userConfig.overwrite ?? fileConfig.overwrite ?? false,
 		excludePatterns: [
 			...(fileConfig.excludePatterns ?? []),
@@ -86,17 +101,19 @@ export function resolveConfig(
 		],
 		excludedPaths: [],
 		includeHidden: userConfig.includeHidden ?? fileConfig.includeHidden ?? false,
-		useGitignore: userConfig.useGitignore ?? fileConfig.useGitignore ?? true,
-		maximumFileSizeBytes: userConfig.maximumFileSizeBytes ?? fileConfig.maximumFileSizeBytes ?? defaultMaximumFileSizeBytes,
-		maximumTotalSizeBytes: userConfig.maximumTotalSizeBytes ?? fileConfig.maximumTotalSizeBytes ?? 0,
+		gitignore: userConfig.gitignore ?? fileConfig.gitignore ?? true,
+		maxFileSize: userConfig.maxFileSize ?? fileConfig.maxFileSize ?? defaultMaxFileSize,
+		maxTotalSize: userConfig.maxTotalSize ?? fileConfig.maxTotalSize ?? 0,
 		includeContents: userConfig.includeContents ?? fileConfig.includeContents ?? true,
 		includeTree: userConfig.includeTree ?? fileConfig.includeTree ?? true,
 		format,
 		followSymlinks: userConfig.followSymlinks ?? fileConfig.followSymlinks ?? false,
-		useAnsi: userConfig.useAnsi ?? fileConfig.useAnsi ?? true,
+		ansi: userConfig.ansi ?? fileConfig.ansi ?? true,
 		logLevel: userConfig.logLevel ?? fileConfig.logLevel ?? "normal",
-		generatedDate,
+		date,
 		banner: userConfig.banner ?? fileConfig.banner,
-		footer: userConfig.footer ?? fileConfig.footer
+		bannerFile: userConfig.bannerFile ?? fileConfig.bannerFile,
+		footer: userConfig.footer ?? fileConfig.footer,
+		footerFile: userConfig.footerFile ?? fileConfig.footerFile
 	};
 }

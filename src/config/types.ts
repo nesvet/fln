@@ -2,43 +2,54 @@ import type { LogLevel, OutputFormat } from "../core/index.js";
 
 
 export type RawConfigFile = Partial<{
-	outputFile: string;
+	$schema: string;
+	output: string;
+	outputFile: string; // TODO(major): remove outputFile fallback
 	overwrite: boolean;
 	excludePatterns: string[];
 	includePatterns: string[];
 	includeHidden: boolean;
-	useGitignore: boolean;
-	maximumFileSizeBytes: number | string;
-	maximumTotalSizeBytes: number | string;
+	gitignore: boolean;
+	useGitignore: boolean; // deprecated
+	maxFileSize: number | string;
+	maximumFileSizeBytes: number | string; // deprecated
+	maxTotalSize: number | string;
+	maximumTotalSizeBytes: number | string; // deprecated
 	includeTree: boolean;
 	includeContents: boolean;
 	format: OutputFormat;
 	followSymlinks: boolean;
-	useAnsi: boolean;
+	ansi: boolean;
+	useAnsi: boolean; // deprecated
 	logLevel: LogLevel;
-	generatedDate: string;
+	date: string;
+	generatedDate: string; // deprecated
 	banner: string;
+	bannerFile: string;
 	footer: string;
+	footerFile: string;
 }>;
 
 export type FlnConfig = {
-	rootDirectory: string;
-	outputFile: string;
+	input: string;
+	output: string;
 	overwrite: boolean;
 	excludePatterns: string[];
 	includePatterns: string[];
 	excludedPaths: string[];
 	includeHidden: boolean;
-	useGitignore: boolean;
-	maximumFileSizeBytes: number;
-	maximumTotalSizeBytes: number;
+	gitignore: boolean;
+	maxFileSize: number;
+	maxTotalSize: number;
 	includeTree: boolean;
 	includeContents: boolean;
 	format: OutputFormat;
 	followSymlinks: boolean;
-	useAnsi: boolean;
+	ansi: boolean;
 	logLevel: LogLevel;
-	generatedDate?: string;
+	date?: string;
 	banner?: string;
+	bannerFile?: string;
 	footer?: string;
+	footerFile?: string;
 };

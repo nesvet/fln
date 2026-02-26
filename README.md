@@ -2,124 +2,190 @@
 
 [![CI](https://github.com/nesvet/fln/actions/workflows/ci.yaml/badge.svg)](https://github.com/nesvet/fln/actions/workflows/ci.yaml)
 [![npm](https://img.shields.io/npm/v/fln)](https://www.npmjs.com/package/fln)
+[![npm downloads](https://img.shields.io/npm/dm/fln)](https://www.npmjs.com/package/fln)
 [![license](https://img.shields.io/npm/l/fln)](LICENSE)
 
-**Your entire codebase → One AI-ready file.**
+**Your entire codebase → one AI-ready file.**
 
 Stop wrestling with file pickers and attachment limits — feed your whole project to any LLM in one shot.
 
 ```bash
-fln .
-```
-
-Or run instantly:
-
-```bash
-npx fln . -o codebase.md
+npx fln
 ```
 
 Works with **Claude**, **ChatGPT**, **Gemini**, **Grok**, **Cursor**, **Copilot**, and *any* AI tool.
 
-**`fln`** (short for *flatten*) is **language-agnostic** by design: TypeScript, Python, Java, Go, Rust, Bash, SQL, mixed monorepos — it treats everything as plain text, detects project metadata from common manifests (`package.json`, `pyproject.toml`, `pom.xml`, `go.mod`, `Cargo.toml`, `CMakeLists.txt`, `vcpkg.json`), respects `.gitignore`, and skips binaries by default.
+**`fln`** (short for *flatten*) is language-agnostic by design: TypeScript, Python, Rust, Go, Java, mixed monorepos — it treats everything as plain text, auto-detects project metadata from ecosystem manifests, respects `.gitignore`, and skips binaries automatically.
+
+---
 
 ## Why fln exists
 
-If you use LLMs for real projects, you’ve hit these limits:
+If you use LLMs for real projects, you've hit these limits:
 
-- **Context windows** — large projects don’t fit.
-- **Upload friction** — selecting dozens of files for every session.
-- **Partial understanding** — AI sees fragments, not the architecture.
-- **Manual prep** — repeating the same setup context again and again.
+- **Context windows** — large projects don't fit
+- **Upload friction** — selecting dozens of files for every session
+- **Partial understanding** — AI sees fragments, not the architecture
+- **Manual prep** — repeating the same setup context again and again
 
 **`fln` removes that overhead.**  
 It turns your project into a single, structured snapshot that LLMs can actually reason about.
 
+---
+
 ## What fln enables
 
 **→ Full-context refactoring**  
-Ask architectural questions that are impossible file-by-file:
-> “Where is the real coupling here?”  
-> “What should be split into modules?”
+Ask architectural questions impossible file-by-file:
+> "Where is the real coupling here?"  
+> "What should be split into modules?"
 
 **→ Instant onboarding**  
-One markdown file instead of “start by opening these 12 folders”. Perfect for reading code on a tablet or onboarding new developers without an IDE.
+One Markdown file instead of "start by opening these 12 folders." Perfect for reading code on a tablet or onboarding new developers without an IDE.
 
 **→ Project-level code reviews**  
-Let AI detect patterns, inconsistencies, and risks across the entire codebase.
+Detect patterns, inconsistencies, and risks across the entire codebase at once.
 
-**→ Auditable Snapshots**  
-Create a single, clean artifact of your codebase state for security reviews, compliance audits, or legal records without granting full repo access.
+**→ Auditable snapshots**  
+A single, clean artifact of your codebase state for security reviews, compliance audits, or legal records — without granting full repo access.
 
-**→ Dataset Preparation**  
+**→ Dataset preparation**  
 Generate clean, formatted data for RAG pipelines and fine-tuning custom models.
 
 **→ LLM-friendly diffs**  
-Flatten → commit → flatten again. See how the *whole project* changed structurally.
+Flatten → commit → flatten again. See how the whole project changed structurally.
 
-## Compatible with your AI workflow
+---
 
-- **Claude** — ideal for large architectural prompts (200K+ tokens).
-- **Gemini** — push massive codebases into 1M token windows.
-- **ChatGPT** — single-shot analysis without attachments.
-- **Cursor / Windsurf** — reference the full project in prompts.
-- **GitHub Copilot** — better context → better suggestions.
-- **Local LLMs** — datasets for RAG and fine-tuning.
+## Instant clipboard
+
+```bash
+fln --stdout | pbcopy        # macOS
+fln --stdout | wl-copy       # Linux (Wayland)
+fln --stdout | xclip -selection clipboard  # Linux (X11)
+```
+
+One command — your entire codebase is in the clipboard. Open any AI chat, paste, ask.
+
+---
+
+## Pipe directly to a CLI LLM tool
+
+```bash
+fln --stdout | llm "What are the biggest architecture issues here?"
+fln --stdout | aichat "Write a CHANGELOG entry for the latest changes"
+fln --stdout | sgpt "Suggest a refactoring plan for this codebase"
+```
+
+---
+
+## Only changed files — perfect for code review
+
+```bash
+# Everything changed since the last commit
+fln --since HEAD~1
+
+# Everything that differs from main
+fln --since main
+
+# Only changed TypeScript files (intersection, not union)
+fln --since main --ext ts,tsx
+```
+
+`--since` calls `git diff --name-only` under the hood. Zero config.
+
+---
+
+## Only the file types you care about
+
+```bash
+fln --ext ts,tsx        # TypeScript only — dramatically reduces token count
+fln --ext py            # Python only
+fln --ext rs            # Rust only
+fln --ext go            # Go only
+```
+
+---
+
+## Embed a custom prompt right into the snapshot
+
+Put your system prompt in a file — it will be prepended to the output and excluded from the directory tree:
+
+```bash
+fln --banner-file .prompt.md
+```
+
+```markdown
+<!-- .prompt.md -->
+You are a senior engineer reviewing a production codebase.
+Identify architecture issues, suggest improvements, point out any bugs.
+```
+
+Or inline:
+
+```bash
+fln --banner "Review this codebase for security vulnerabilities."
+```
+
+Same for footers: `--footer-file` / `--footer`.
+
+---
 
 ## Built for real projects
 
-- ⚡ **Fast parallel scanning** — thousands of files in seconds.
-- 🎯 **Smart filtering** — respects `.gitignore`, excludes binaries, configurable size limits.
-- 📁 **Intentional file order** — entry points and configs first, not alphabetical noise.
-- 🔄 **Auto-detection** — skips files previously generated by `fln`.
-- 📐 **Deterministic output** — same input → same snapshot.
-- 🧠 **Project metadata detection** — name & version from ecosystem-native manifests.
-- 🛠️ **Developer-friendly** — `Markdown` for humans, `JSON` for tooling, `--dry-run` mode for safety.
-- 🔒 **No surprises** — runs locally, no data leaves your machine.
+- ⚡ **Fast parallel scanning** — thousands of files in seconds
+- 🎯 **Smart filtering** — respects `.gitignore`, skips binaries and lock files, configurable size limits
+- 📁 **Intentional file order** — `README`, entry points, and configs first; `LICENSE`, `CHANGELOG` last. LLMs see the most important context first
+- 📊 **Token count upfront** — every run reports estimated tokens so you know what you're sending before you hit send
+- 🔍 **Extension breakdown** — `--verbose` shows token distribution by file type, so you know exactly what's eating your context window
+- 🔄 **Self-aware** — skips files previously generated by `fln`, never recurses into its own output
+- 🛡️ **Backtick-safe** — if a file contains ` ``` `, fln automatically uses longer fences so the Markdown never breaks
+- 📐 **Deterministic output** — same input → same snapshot
+- 🧠 **Project metadata detection** — output named `my-app-1.2.0.md` automatically from `package.json`, `Cargo.toml`, `pyproject.toml`, `pom.xml`, `go.mod`, `vcpkg.json`, `CMakeLists.txt`
+- 🛠️ **Two output formats** — `md` for humans, `json` for tooling
+- 🔒 **Fully local** — zero telemetry, zero network calls, no data leaves your machine
 
-Zero dependencies on external services. Zero tracking. Just a tool that does its job.
+---
 
 ## Install
 
-##### npm
+##### npm / Bun
 ```bash
+npx fln          # run once without installing
+bunx fln
+
 npm install -g fln
+bun add -g fln
 ```
 
-##### Linux & macOS ([view install script](./install.sh))
+##### macOS / Linux — native binary, no Node.js required
 ```bash
 curl -fsSL https://fln.nesvet.dev/install | sh
 ```
 
-##### Windows ([view install script](./install.ps1))
-```bash
+##### Windows — native binary, no Node.js required
+```powershell
 powershell -c "irm fln.nesvet.dev/install.ps1 | iex"
-```
-
-##### Or just run without installing
-```bash
-npx fln . -o codebase.md
 ```
 
 <details>
 <summary>More installation options</summary>
 
-### One-line installer options (macOS/Linux)
-
-Pin a version or custom install directory:
+**Pin a specific version or install to a custom directory (macOS/Linux):**
 
 ```bash
-curl -fsSL "https://fln.nesvet.dev/install" | FLN_VERSION="<version>" INSTALL_DIR="$HOME/.local/bin" sh
+curl -fsSL https://fln.nesvet.dev/install | FLN_VERSION="<version>" INSTALL_DIR="$HOME/.local/bin" sh
 ```
 
-### One-line installer options (Windows PowerShell)
+**Windows PowerShell:**
 
 ```powershell
 $env:FLN_VERSION = "<version>"
-$env:INSTALL_DIR = "$env:LOCALAPPDATA\\fln\\bin"
+$env:INSTALL_DIR = "$env:LOCALAPPDATA\fln\bin"
 powershell -c "irm fln.nesvet.dev/install.ps1 | iex"
 ```
 
-### Manual download (GitHub Releases)
+**Manual download from GitHub Releases:**
 
 ```bash
 curl -L "https://github.com/nesvet/fln/releases/latest/download/fln-macos-x64.tar.gz" | tar -xz -C /usr/local/bin
@@ -128,74 +194,160 @@ chmod +x /usr/local/bin/fln
 
 </details>
 
+---
+
 ## Usage
 
 ```bash
-fln [directory] [options]
+fln [directory] [...flags]
+fln init [--overwrite]
 ```
 
-Examples:
-
 ```bash
-# Flatten entire project
-fln .
+# Flatten the current directory → my-app-1.2.0.md
+fln
 
-# Exclude tests and fixtures
-fln src -e "**/*.test.ts" -e "fixtures/"
+# Specify input and output
+fln . -o context.md
 
-# Force include a file (even if ignored)
-fln . -i "dist/output.md"
+# Scan src/, save output to the project root
+fln src -o .
 
-# Generate JSON for tooling
-fln . --no-contents --format json
+# Source files only — no tests, no fixtures
+fln -e "*.test.ts" -e "*.spec.ts" -e "fixtures/"
 
-# Preview without writing
-fln . --dry-run
+# Include all source files but exclude markdown — except README
+fln -e "*.md" -e '!README.md'
 
-# Overwrite output file instead of creating codebase-1.md
-fln . -o codebase.md -w
+# TypeScript source only
+fln --ext ts,tsx
+
+# Changed files since last commit
+fln --since HEAD~1
+
+# Tree only — no file contents
+fln --no-contents
+
+# Force-include a file that's in .gitignore
+fln -i "src/generated/schema.ts"
+
+# Preview what would be included, with per-extension breakdown
+fln --dry-run --verbose
+
+# Overwrite instead of creating codebase-1.md
+fln -o codebase.md -w
+
+# JSON output for programmatic use
+fln --format json -o snapshot.json
 ```
 
 <details>
-<summary>All CLI options</summary>
+<summary>All CLI flags</summary>
 
-- `-o, --output <path>` Output file or directory
-- `-w, --overwrite` Overwrite output file instead of adding numeric suffix
-- `-e, --exclude <glob>` Exclude patterns (repeatable)
-- `-i, --include <glob>` Force include patterns
-- `--include-hidden` Include hidden files and directories
-- `--no-gitignore` Ignore `.gitignore`
-- `--max-size <size>` Max file size (`10mb`, `512kb`)
-- `--max-total-size <size>` Max total included size
-- `--no-contents` Exclude file contents
-- `--no-tree` Exclude directory tree
-- `--format <md|json>` Output format
-- `--dry-run` Scan without writing output
-- `--follow-symlinks` Follow symlinks
-- `--no-ansi` Disable ANSI colors
-- `--no-sponsor-message` Hide support message (also: `FLN_NO_SPONSOR=1`)
-- `--generated-date <date>` Use this date in the “Generated” header (format: `YYYY-MM-DD HH:mm`)
-- `--banner <text>` Add text at the beginning
-- `--footer <text>` Add text at the end of the output
-- `-q, --quiet` Minimal output
-- `-V, --verbose` Verbose output with breakdown
-- `--debug` Debug output with file list
-- `-v, --version` Show version
-- `-h, --help` Show help
+**Output**
+
+| Flag | Description |
+|---|---|
+| `-o, --output <path>` | Output file or directory. Adds `.md`/`.json` if no extension given. Default: `<n>-<version>.md` |
+| `-w, --overwrite` | Overwrite instead of adding numeric suffix |
+| `--stdout` | Write to stdout instead of file (implies `--quiet`) |
+| `--format <md\|json>` | Output format (default: `md`) |
+| `--dry-run` | Scan and report without writing anything |
+
+**Filtering**
+
+| Flag | Description |
+|---|---|
+| `-e, --exclude <glob>` | Exclude pattern — repeatable |
+| `-i, --include <glob>` | Whitelist mode — only matching files are included, repeatable |
+| `--ext <ext>` | Include only these extensions, e.g. `ts,tsx,js` |
+| `--since <ref>` | Only files changed since git ref, e.g. `HEAD~1`, `main` |
+| `--include-hidden` | Include hidden files and directories |
+| `--no-gitignore` | Ignore `.gitignore` rules |
+| `--max-size <size>` | Max individual file size, e.g. `10mb`, `512kb` |
+| `--max-total-size <size>` | Max total size of all included files |
+| `--follow-symlinks` | Follow symlinks while scanning |
+
+**Content**
+
+| Flag | Description |
+|---|---|
+| `--no-contents` | Exclude file contents (tree only) |
+| `--no-tree` | Exclude directory tree |
+| `--banner <text>` | Prepend text after the header |
+| `--banner-file <path>` | Prepend file contents — relative to input, excluded from tree |
+| `--footer <text>` | Append text at the end |
+| `--footer-file <path>` | Append file contents — relative to input, excluded from tree |
+| `--date <YYYY-MM-DD HH:mm>` | Fix the Generated date (useful for reproducible output) |
+
+**Logging & other**
+
+| Flag | Description |
+|---|---|
+| `-q, --quiet` | Minimal output |
+| `-V, --verbose` | Verbose output with per-extension token breakdown |
+| `--debug` | Debug output with full file list |
+| `--no-ansi` | Disable colors |
+| `--no-sponsor-message` | Hide support message (also: `FLN_NO_SPONSOR=1`) |
+| `-v, --version` | Show version |
+| `-h, --help` | Show help |
+
+> **Note:** Quote glob patterns to prevent shell expansion — `"*.test.ts"`, not `*.test.ts`.  
+> To un-exclude a specific file, use negation in `--exclude`: `-e "*.md" -e '!README.md'`.
 
 </details>
 
+---
+
+## Config file
+
+```bash
+fln init
+```
+
+Generates `.fln.json` with full IntelliSense support in VS Code, WebStorm, and any editor with JSON Schema — autocomplete and validation out of the box, no extensions needed.
+
+<details>
+<summary>.fln.json reference</summary>
+
+```json
+{
+  "$schema": "https://fln.nesvet.dev/schema",
+  "output": "snapshot.md",
+  "overwrite": false,
+  "excludePatterns": [ "dist/", "**/*.snap" ],
+  "includePatterns": [],
+  "includeHidden": false,
+  "gitignore": true,
+  "maxFileSize": "10mb",
+  "maxTotalSize": "0",
+  "includeTree": true,
+  "includeContents": true,
+  "format": "md",
+  "followSymlinks": false,
+  "logLevel": "normal",
+  "date": "2026-02-20 12:00",
+  "banner": "You are reviewing a production codebase.",
+  "bannerFile": ".prompt.md",
+  "footer": "End of snapshot.",
+  "footerFile": "docs/footer.md"
+}
+```
+
+**Pattern format:** gitignore-style globs relative to the input directory. Leading `./` is normalized. Use `!` for negation (`*.log` + `!important.log`). Trailing slash `src/` matches directories only. CLI flags always override the config file.
+
+</details>
+
+---
+
 ## CI/CD & Automation
 
-Integrate `fln` into your pipeline to keep your codebase “AI-ready” automatically.
+### GitHub Actions — auto-generate snapshots
 
-### GitHub Actions: Auto-generate Snapshots
-
-Generate a fresh `codebase.md` artifact on every push. Download it anytime to chat with LLMs about the *exact* state of your main branch or a specific PR without manual scanning.
-
-Create `.github/workflows/codebase-snapshot.yaml`:
+Fresh `codebase.md` on every push. Download it anytime to chat with LLMs about the exact state of your main branch or a specific PR:
 
 ```yaml
+# .github/workflows/codebase-snapshot.yaml
 name: Snapshot Codebase
 
 on:
@@ -206,136 +358,140 @@ on:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
-
-      - name: Generate Snapshot
-        # Generates codebase.md without installing fln globally
+      - name: Generate snapshot
         run: npx fln . -o codebase.md -w --no-ansi
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v6
         with:
           name: codebase-snapshot
           path: codebase.md
           retention-days: 7
 ```
 
-### Git Hooks: Pre-commit Context Guard
+### Pre-commit context guard
 
-Prevent accidental “context bloat” (e.g., committing large datasets or wrong lockfiles) by failing commits if the flattened codebase exceeds a specific size. This ensures your project always fits within LLM context windows.
-
-Add to your pre-commit hook (e.g., via `husky` or `lint-staged`):
+Fail the commit if the flattened codebase exceeds a size limit — ensures the project always fits in LLM context windows:
 
 ```bash
-# Fails the commit if the flattened codebase exceeds 5MB (configurable)
-# --dry-run ensures no files are written to disk
+# .husky/pre-commit
 npx fln . --dry-run --max-total-size 5mb
 ```
 
-## JavaScript API
+---
+
+## API
+
+```bash
+npm install fln
+```
 
 ```typescript
 import { fln } from "fln";
 
 const result = await fln({
-  rootDirectory: "./src",
-  outputFile: "output.md",
-  overwrite: true,
+  input: "./src",
+  output: "snapshot.md",
   excludePatterns: [ "*.test.ts", "fixtures/" ],
-  format: "md",
   onProgress: (current, total) => {
-    console.log(`Progress: ${current}/${total}`);
+    process.stdout.write(`\r${current}/${total} files`);
   }
 });
 
-console.log(`Processed ${result.files} files`);
-console.log(`Output: ${result.outputPath}`);
-console.log(`Tokens: ${result.outputTokenCount}`);
+console.log(`${result.files} files → ${result.outputPath}`);
+console.log(`~${result.outputTokenCount.toLocaleString()} tokens`);
 ```
 
-All CLI options are available via `FlnOptions`.
-
-
-## Advanced
-
 <details>
-<summary>Configuration file (.fln.json)</summary>
+<summary>Full API reference</summary>
 
-```json
-{
-	"outputFile": "output.md",
-	"overwrite": false,
-	"excludePatterns": [
-		"dist/",
-		"**/*.snap"
-	],
-	"includePatterns": [],
-	"includeHidden": false,
-	"useGitignore": true,
-	"maximumFileSizeBytes": "10mb",
-	"maximumTotalSizeBytes": "0",
-	"includeTree": true,
-	"includeContents": true,
-	"format": "md",
-	"followSymlinks": false,
-	"logLevel": "normal",
-	"generatedDate": "2026-02-09 12:00",
-	"banner": "This is a snapshot of the codebase.",
-	"footer": "End of snapshot."
-}
+**Options**
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `input` | `string` | `process.cwd()` | Directory to flatten |
+| `output` | `string` | auto | Output file path or directory. `"-"` for stdout |
+| `overwrite` | `boolean` | `false` | Overwrite instead of numeric suffix |
+| `excludePatterns` | `string[]` | `[]` | Glob patterns to exclude |
+| `includePatterns` | `string[]` | `[]` | Glob patterns to force include |
+| `includeHidden` | `boolean` | `false` | Include hidden files/dirs |
+| `gitignore` | `boolean` | `true` | Respect `.gitignore` rules |
+| `maxFileSize` | `number \| string` | `"10mb"` | Max individual file size |
+| `maxTotalSize` | `number \| string` | `0` | Max total size (0 = unlimited) |
+| `includeContents` | `boolean` | `true` | Include file contents |
+| `includeTree` | `boolean` | `true` | Include directory tree |
+| `format` | `"md" \| "json"` | `"md"` | Output format |
+| `followSymlinks` | `boolean` | `false` | Follow symlinks |
+| `date` | `string` | current | Fixed `YYYY-MM-DD HH:mm` for Generated header |
+| `banner` | `string` | — | Text prepended after header |
+| `bannerFile` | `string` | — | File prepended (relative to input) |
+| `footer` | `string` | — | Text appended at end |
+| `footerFile` | `string` | — | File appended (relative to input) |
+| `logLevel` | `"silent" \| "normal" \| "verbose" \| "debug"` | `"silent"` | Log level |
+| `ansi` | `boolean` | `false` | ANSI colors in log output |
+| `onProgress` | `(current, total) => void` | — | Progress callback |
+
+**Result**
+
+```typescript
+type FlnResult = {
+  projectName: string;      // from package.json, pom.xml, Cargo.toml, etc.
+  files: number;            // files included
+  directories: number;      // directories scanned
+  binary: number;           // binary files (shown as [BINARY FILE: X kb] in output)
+  skipped: number;          // skipped — too large, generated by fln, or read errors
+  errors: number;           // read errors
+  totalSizeBytes: number;   // total input size
+  outputSizeBytes: number;  // output file size
+  outputTokenCount: number; // estimated token count
+  outputPath: string;       // absolute path ("-" for stdout)
+};
 ```
 
 </details>
 
-<details>
-<summary>Output naming & formats</summary>
+---
 
-- Uses project name + version if available (`package.json`, `pyproject.toml`, `pom.xml`, `go.mod`, `Cargo.toml`, `CMakeLists.txt` or `vcpkg.json`)  
-- `md` includes tree + contents
-- `json` includes `rootDirectory`, `tree`, `stats`
+## Preview
 
-</details>
+Real outputs from [`examples/`](examples/):
+
+- [TypeScript](examples/ts-app.md)
+- [Python](examples/python-app.md)
+- [Go](examples/go-app.md)
+- [Rust](examples/rust-app.md)
+- [Java](examples/java-app.md)
+
+---
 
 <details>
 <summary>Runtime compatibility</summary>
 
-**Node.js**
-- Requires Node.js `>=18.3`
-- ESM-only package (`"type": "module"`)
-- CLI works via `npm i -g fln` or `npx fln`
+**Node.js** — requires `>=18.3.0`, ESM-only (`"type": "module"`). Install via `npm i -g fln` or run with `npx`.
 
-**Bun**
-- Requires Bun `>=1.0.0`
-- CLI works via `bun install -g fln` or `bunx fln`
+**Bun** — requires `>=1.0.0`. Install via `bun add -g fln` or run with `bunx`.
+
+**Standalone binary** — no runtime required. Install via the `curl` / PowerShell one-liner above.
 
 </details>
 
-## Preview
-
-Full real outputs are provided below. Each example is a compact project in [`examples/`](examples/). `fln` outputs the directory tree and file contents with **entry points and configs first** (intentional file order):
-
-- [TypeScript](examples/ts-app.md)
-- [Python](examples/python-app.md)
-- [Java](examples/java-app.md)
-- [Go](examples/go-app.md)
-- [Rust](examples/rust-app.md)
+---
 
 ## Support this project
 
-**fln is free, open-source, and maintained by one developer.**
+**`fln` is free, open-source, and maintained by one developer.**
 
 If it saves you time or improves your AI workflow:
-- ⭐️ Star the repo — it genuinely helps discoverability
-- 💙 Support on [Patreon](https://www.patreon.com/nesvet) — priority features & long-term maintenance
+
+- ⭐️ **Star the repo** — it genuinely helps discoverability
+- 💙 **[Support on Patreon](https://www.patreon.com/nesvet)** — keeps development going
+
+---
 
 ## Contributing
 
-PRs and issues are welcome.  
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup and guidelines.
+PRs and issues are welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup and guidelines.
 
 ## License
 
-MIT
+MIT © [Eugene Nesvetaev](https://nesvet.dev)

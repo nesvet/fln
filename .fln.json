@@ -1,0 +1,15 @@
+{
+	"$schema": "https://fln.nesvet.dev/schema",
+	"output": "output.md",
+	"excludePatterns": [],
+	"includePatterns": [],
+	"gitignore": true,
+	"includeHidden": false,
+	"maxFileSize": "10mb",
+	"maxTotalSize": "0",
+	"includeTree": true,
+	"includeContents": true,
+	"format": "md",
+	"followSymlinks": false,
+	"overwrite": false
+}

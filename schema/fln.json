@@ -1,0 +1,121 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://fln.nesvet.dev/schema",
+	"title": "fln configuration",
+	"description": "Configuration file for fln — flatten your codebase into a single file for LLMs",
+	"type": "object",
+	"additionalProperties": false,
+	"properties": {
+		"$schema": {
+			"type": "string"
+		},
+		"output": {
+			"type": "string",
+			"description": "Output file path or directory. Default: auto-generated from project metadata (e.g. my-app-1.0.0.md)"
+		},
+		"overwrite": {
+			"type": "boolean",
+			"description": "Overwrite output file instead of adding numeric suffix when it already exists",
+			"default": false
+		},
+		"excludePatterns": {
+			"type": "array",
+			"items": { "type": "string" },
+			"description": "Glob patterns to exclude (e.g. [\"*.test.ts\", \"fixtures/\"])",
+			"default": []
+		},
+		"includePatterns": {
+			"type": "array",
+			"items": { "type": "string" },
+			"description": "Glob patterns to force include, overriding .gitignore rules",
+			"default": []
+		},
+		"includeHidden": {
+			"type": "boolean",
+			"description": "Include hidden files and directories (starting with .)",
+			"default": false
+		},
+		"gitignore": {
+			"type": "boolean",
+			"description": "Use .gitignore rules for filtering",
+			"default": true
+		},
+		"maxFileSize": {
+			"oneOf": [
+				{ "type": "integer", "minimum": 1 },
+				{
+					"type": "string",
+					"pattern": "^\\d+(\\.\\d+)?\\s*(b|kb|mb|gb)?$",
+					"examples": [ "10mb", "512kb", "1gb" ]
+				}
+			],
+			"description": "Maximum individual file size. Default: 10mb"
+		},
+		"maxTotalSize": {
+			"oneOf": [
+				{ "type": "integer", "minimum": 0 },
+				{
+					"type": "string",
+					"pattern": "^\\d+(\\.\\d+)?\\s*(b|kb|mb|gb)?$",
+					"examples": [ "100mb", "1gb" ]
+				}
+			],
+			"description": "Maximum total size for all included files. 0 means unlimited",
+			"default": 0
+		},
+		"includeContents": {
+			"type": "boolean",
+			"description": "Include file contents in output",
+			"default": true
+		},
+		"includeTree": {
+			"type": "boolean",
+			"description": "Include directory tree structure",
+			"default": true
+		},
+		"format": {
+			"type": "string",
+			"enum": [ "md", "json" ],
+			"description": "Output format",
+			"default": "md"
+		},
+		"followSymlinks": {
+			"type": "boolean",
+			"description": "Follow symlinks while scanning",
+			"default": false
+		},
+		"ansi": {
+			"type": "boolean",
+			"description": "Use ANSI colors in log output",
+			"default": true
+		},
+		"logLevel": {
+			"type": "string",
+			"enum": [ "silent", "normal", "verbose", "debug" ],
+			"description": "Logging level",
+			"default": "normal"
+		},
+		"date": {
+			"type": "string",
+			"pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$",
+			"description": "Fixed date string for the Generated header (overrides current date). Format: YYYY-MM-DD HH:mm",
+			"examples": [ "2026-01-01 00:00" ]
+		},
+		"banner": {
+			"type": "string",
+			"description": "Custom text prepended to output after the header"
+		},
+		"bannerFile": {
+			"type": "string",
+			"description": "Path to file whose contents are prepended to output (relative to input directory). File is excluded from tree"
+		},
+		"footer": {
+			"type": "string",
+			"description": "Custom text appended to the end of output"
+		},
+		"footerFile": {
+			"type": "string",
+			"description": "Path to file whose contents are appended to output (relative to input directory). File is excluded from tree"
+		}
+	}
+}

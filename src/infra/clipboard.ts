@@ -164,19 +164,20 @@ export async function copyFileToClipboard(
 			},
 		);
 
+	const runner = copySubprocessRunner ?? runCopySubprocess;
 	const clipboardCommand = resolveClipboardCommand();
-	if (!clipboardCommand)
+	// Test runners may inject a no-op without a real clipboard utility (e.g. Linux CI).
+	if (!clipboardCommand && copySubprocessRunner === undefined)
 		throw flnError(
 			"CLIPBOARD_UNAVAILABLE",
 			"No clipboard utility found for this environment.",
 			{ hint: clipboardUnavailableHint() },
 		);
 
-	const runner = copySubprocessRunner ?? runCopySubprocess;
 	try {
 		await runner(
 			filePath,
-			clipboardCommand,
+			clipboardCommand ?? { command: "true", args: [] },
 			options.timeoutMs ?? DEFAULT_COPY_TIMEOUT_MS,
 		);
 	} catch (error) {

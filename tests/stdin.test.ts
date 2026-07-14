@@ -165,19 +165,22 @@ describe("fln --stdin (CLI spawn)", () => {
 	): Promise<{ stdout: string; stderr: string; exitCode: number }> {
 		const proc = Bun.spawn(["bun", "run", cliPath, ...args], {
 			cwd: input,
-			stdin: new Blob([fileList]),
+			stdin: "pipe",
 			stdout: "pipe",
 			stderr: "pipe",
 		});
-		const [stdout, stderr] = await Promise.all([
+		proc.stdin.write(fileList);
+		await proc.stdin.end();
+		const [stdout, stderr, exitCode] = await Promise.all([
 			new Response(proc.stdout).text(),
 			new Response(proc.stderr).text(),
+			proc.exited,
 		]);
 
 		return {
 			stdout: stdout.trim(),
 			stderr: stderr.trim(),
-			exitCode: await proc.exited,
+			exitCode,
 		};
 	}
 

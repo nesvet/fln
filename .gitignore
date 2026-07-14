@@ -4,7 +4,10 @@ src/version.ts
 node_modules/
 dist/
 fln
+fln.json
+.env
+**/.env
 fln-*.md
 output.md
 output-*.md
-docs/
+examples/*/snapshot*.md

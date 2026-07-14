@@ -1,0 +1,119 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://fln.nesvet.dev/schema/diff",
+	"title": "fln diff output",
+	"description": "JSON document written by fln diff --format json (schemaVersion 1)",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schemaVersion",
+		"before",
+		"after",
+		"added",
+		"removed",
+		"changed",
+		"treeAdded",
+		"treeRemoved",
+		"stats",
+		"generated"
+	],
+	"properties": {
+		"$schema": {
+			"type": "string",
+			"description": "JSON Schema URI for this document"
+		},
+		"schemaVersion": {
+			"const": 1,
+			"description": "Diff output format version"
+		},
+		"before": {
+			"type": "string",
+			"description": "Label for the before snapshot (file path or git ref)"
+		},
+		"after": {
+			"type": "string",
+			"description": "Label for the after snapshot (file path or git ref)"
+		},
+		"added": {
+			"type": "array",
+			"items": { "type": "string" },
+			"description": "Paths present in after but not in before"
+		},
+		"removed": {
+			"type": "array",
+			"items": { "type": "string" },
+			"description": "Paths present in before but not in after"
+		},
+		"changed": {
+			"type": "array",
+			"items": { "$ref": "#/$defs/FlnDiffFile" },
+			"description": "Files present in both but with different content hash"
+		},
+		"treeAdded": {
+			"type": "array",
+			"items": { "type": "string" },
+			"description": "Tree paths added (directory tree delta)"
+		},
+		"treeRemoved": {
+			"type": "array",
+			"items": { "type": "string" },
+			"description": "Tree paths removed (directory tree delta)"
+		},
+		"stats": { "$ref": "#/$defs/FlnDiffStats" },
+		"generated": {
+			"type": "string",
+			"pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$",
+			"description": "Diff timestamp (YYYY-MM-DD HH:mm)"
+		}
+	},
+	"$defs": {
+		"SnapshotFidelity": {
+			"type": "string",
+			"enum": ["compressed", "full", "outline"],
+			"description": "Fidelity label parsed from snapshot sections"
+		},
+		"FlnDiffFile": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["path", "status", "sizeDelta", "tokenDelta"],
+			"properties": {
+				"path": { "type": "string" },
+				"status": {
+					"type": "string",
+					"enum": ["added", "changed", "removed"]
+				},
+				"sizeDelta": { "type": "integer" },
+				"tokenDelta": { "type": "integer" },
+				"fidelityBefore": { "$ref": "#/$defs/SnapshotFidelity" },
+				"fidelityAfter": { "$ref": "#/$defs/SnapshotFidelity" },
+				"hunks": {
+					"type": "array",
+					"items": { "type": "string" },
+					"description": "Unified diff hunks for changed files (when --diff-hunks is used)"
+				}
+			}
+		},
+		"FlnDiffStats": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"filesAdded",
+				"filesRemoved",
+				"filesChanged",
+				"tokenDelta",
+				"sizeDelta",
+				"treeAdded",
+				"treeRemoved"
+			],
+			"properties": {
+				"filesAdded": { "type": "integer", "minimum": 0 },
+				"filesRemoved": { "type": "integer", "minimum": 0 },
+				"filesChanged": { "type": "integer", "minimum": 0 },
+				"tokenDelta": { "type": "integer" },
+				"sizeDelta": { "type": "integer" },
+				"treeAdded": { "type": "integer", "minimum": 0 },
+				"treeRemoved": { "type": "integer", "minimum": 0 }
+			}
+		}
+	}
+}

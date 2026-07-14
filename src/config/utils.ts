@@ -2,7 +2,6 @@ import { readFile, stat } from "node:fs/promises";
 import { basename, join, parse } from "node:path";
 import { hasTrailingSeparator, isNullishOutput } from "../path/index.js";
 
-
 export function normalizeFileToken(rawValue: string): string {
 	return rawValue
 		.trim()
@@ -10,7 +9,6 @@ export function normalizeFileToken(rawValue: string): string {
 		.replaceAll(/-+/g, "-")
 		.replaceAll(/^[.-]+|[.-]+$/g, "");
 }
-
 
 async function readTextFile(filePath: string): Promise<string | undefined> {
 	try {
@@ -20,35 +18,49 @@ async function readTextFile(filePath: string): Promise<string | undefined> {
 	}
 }
 
-export async function getProjectMetadata(input: string): Promise<{ name: string; version?: string }> {
+export async function getProjectMetadata(
+	input: string,
+): Promise<{ name: string; version?: string }> {
 	// Node.js (package.json)
 	const packageJsonContent = await readTextFile(join(input, "package.json"));
 	if (packageJsonContent)
 		try {
-			const packageJson = JSON.parse(packageJsonContent) as { name?: string; version?: string };
-			const normalizedName = packageJson.name ? normalizeFileToken(packageJson.name) : "";
-			const normalizedVersion = packageJson.version ? normalizeFileToken(packageJson.version) : "";
+			const packageJson = JSON.parse(packageJsonContent) as {
+				name?: string;
+				version?: string;
+			};
+			const normalizedName = packageJson.name
+				? normalizeFileToken(packageJson.name)
+				: "";
+			const normalizedVersion = packageJson.version
+				? normalizeFileToken(packageJson.version)
+				: "";
 			if (normalizedName)
 				return {
 					name: normalizedName,
-					version: normalizedVersion
+					version: normalizedVersion,
 				};
 		} catch {}
-	
+
 	// C++ Modern (vcpkg.json)
 	const vcpkgContent = await readTextFile(join(input, "vcpkg.json"));
 	if (vcpkgContent)
 		try {
-			const vcpkg = JSON.parse(vcpkgContent) as { name?: string; version?: string };
+			const vcpkg = JSON.parse(vcpkgContent) as {
+				name?: string;
+				version?: string;
+			};
 			const normalizedName = vcpkg.name ? normalizeFileToken(vcpkg.name) : "";
-			const normalizedVersion = vcpkg.version ? normalizeFileToken(vcpkg.version) : "";
+			const normalizedVersion = vcpkg.version
+				? normalizeFileToken(vcpkg.version)
+				: "";
 			if (normalizedName)
 				return {
 					name: normalizedName,
-					version: normalizedVersion
+					version: normalizedVersion,
 				};
 		} catch {}
-	
+
 	// Java/Kotlin (pom.xml)
 	const pomContent = await readTextFile(join(input, "pom.xml"));
 	if (pomContent) {
@@ -57,8 +69,13 @@ export async function getProjectMetadata(input: string): Promise<{ name: string;
 			.replace(/<build[\S\s]*/i, "")
 			.replace(/<profiles[\S\s]*/i, "")
 			.replace(/<dependencymanagement[\S\s]*/i, "");
-		const projectWithoutParent = projectSection.replace(/<parent[\S\s]*?<\/parent>/i, "");
-		const artifactIdMatch = projectWithoutParent.match(/<artifactid>\s*([^\s<]+)\s*<\/artifactid>/i);
+		const projectWithoutParent = projectSection.replace(
+			/<parent[\S\s]*?<\/parent>/i,
+			"",
+		);
+		const artifactIdMatch = projectWithoutParent.match(
+			/<artifactid>\s*([^\s<]+)\s*<\/artifactid>/i,
+		);
 		if (artifactIdMatch) {
 			const normalizedName = normalizeFileToken(artifactIdMatch[1]);
 			if (normalizedName) {
@@ -66,91 +83,284 @@ export async function getProjectMetadata(input: string): Promise<{ name: string;
 					.replace(/<parent[\S\s]*?<\/parent>/i, "")
 					.match(/<version>\s*([^\s$<][^\s<]*)\s*<\/version>/i);
 				const parentVersionMatch = projectSection.match(
-					/<parent[\S\s]*?<version>\s*([^\s$<][^\s<]*)\s*<\/version>[\S\s]*?<\/parent>/i
+					/<parent[\S\s]*?<version>\s*([^\s$<][^\s<]*)\s*<\/version>[\S\s]*?<\/parent>/i,
 				);
 				const rawVersion = directVersionMatch?.[1] ?? parentVersionMatch?.[1];
-				const normalizedVersion = rawVersion ? normalizeFileToken(rawVersion) : "";
-				
+				const normalizedVersion = rawVersion
+					? normalizeFileToken(rawVersion)
+					: "";
+
 				return {
 					name: normalizedName,
-					...(normalizedVersion && { version: normalizedVersion })
+					...(normalizedVersion && { version: normalizedVersion }),
 				};
 			}
 		}
 	}
-	
+
 	// Python (pyproject.toml)
 	const pyprojectContent = await readTextFile(join(input, "pyproject.toml"));
 	if (pyprojectContent) {
-		const pythonName = pyprojectContent.match(/^\[project][^[]*?^name\s*=\s*["']([^\n\r"']+)["']/ms)?.[1] ??
-			pyprojectContent.match(/^\[tool\.poetry][^[]*?^name\s*=\s*["']([^\n\r"']+)["']/ms)?.[1];
-		const pythonVersion = pyprojectContent.match(/^\[project][^[]*?^version\s*=\s*["']([^\n\r"']+)["']/ms)?.[1] ??
-			pyprojectContent.match(/^\[tool\.poetry][^[]*?^version\s*=\s*["']([^\n\r"']+)["']/ms)?.[1];
-		
+		const pythonName =
+			pyprojectContent.match(
+				/^\[project][^[]*?^name\s*=\s*["']([^\n\r"']+)["']/ms,
+			)?.[1] ??
+			pyprojectContent.match(
+				/^\[tool\.poetry][^[]*?^name\s*=\s*["']([^\n\r"']+)["']/ms,
+			)?.[1];
+		const pythonVersion =
+			pyprojectContent.match(
+				/^\[project][^[]*?^version\s*=\s*["']([^\n\r"']+)["']/ms,
+			)?.[1] ??
+			pyprojectContent.match(
+				/^\[tool\.poetry][^[]*?^version\s*=\s*["']([^\n\r"']+)["']/ms,
+			)?.[1];
+
 		const normalizedName = pythonName ? normalizeFileToken(pythonName) : "";
-		const normalizedVersion = pythonVersion ? normalizeFileToken(pythonVersion) : "";
+		const normalizedVersion = pythonVersion
+			? normalizeFileToken(pythonVersion)
+			: "";
 		if (normalizedName)
 			return {
 				name: normalizedName,
-				version: normalizedVersion
+				version: normalizedVersion,
 			};
 	}
-	
+
 	// Rust (Cargo.toml)
 	const cargoContent = await readTextFile(join(input, "Cargo.toml"));
 	if (cargoContent) {
-		const rustName = cargoContent.match(/^\[package][^[]*?^name\s*=\s*["']([^\n\r"']+)["']/ms)?.[1];
-		const rustVersion = cargoContent.match(/^\[package][^[]*?^version\s*=\s*["']([^\n\r"']+)["']/ms)?.[1];
-		
+		const rustName = cargoContent.match(
+			/^\[package][^[]*?^name\s*=\s*["']([^\n\r"']+)["']/ms,
+		)?.[1];
+		const rustVersion = cargoContent.match(
+			/^\[package][^[]*?^version\s*=\s*["']([^\n\r"']+)["']/ms,
+		)?.[1];
+
 		const normalizedName = rustName ? normalizeFileToken(rustName) : "";
-		const normalizedVersion = rustVersion ? normalizeFileToken(rustVersion) : "";
+		const normalizedVersion = rustVersion
+			? normalizeFileToken(rustVersion)
+			: "";
 		if (normalizedName)
 			return {
 				name: normalizedName,
-				version: normalizedVersion
+				version: normalizedVersion,
 			};
 	}
-	
+
 	// Go (go.mod)
 	const goModContent = await readTextFile(join(input, "go.mod"));
 	if (goModContent) {
 		const match = goModContent.match(/^module\s+(.+)$/m);
-		
+
 		if (match) {
 			const fullPath = match[1].trim();
 			const shortName = fullPath.split("/").pop();
 			const normalizedName = shortName ? normalizeFileToken(shortName) : "";
-			
+
 			if (normalizedName)
 				return {
-					name: normalizedName
+					name: normalizedName,
 				};
 		}
 	}
-	
+
+	const jsonManifests: Array<{
+		file: string;
+		nameKey?: string;
+		versionKey?: string;
+	}> = [
+		{ file: "composer.json" },
+		{ file: "deno.json" },
+		{ file: "elm.json", nameKey: "name", versionKey: "version" },
+		{ file: "pubspec.yaml" },
+		{ file: "shard.yml" },
+		{ file: "dub.json" },
+	];
+
+	for (const manifest of jsonManifests) {
+		const content = await readTextFile(join(input, manifest.file));
+		if (!content) continue;
+
+		if (manifest.file.endsWith(".json"))
+			try {
+				const parsed = JSON.parse(content) as Record<string, unknown>;
+				const rawName =
+					typeof parsed[manifest.nameKey ?? "name"] === "string"
+						? (parsed[manifest.nameKey ?? "name"] as string)
+						: "";
+				const rawVersion =
+					typeof parsed[manifest.versionKey ?? "version"] === "string"
+						? (parsed[manifest.versionKey ?? "version"] as string)
+						: "";
+				const normalizedName = normalizeFileToken(rawName);
+				const normalizedVersion = normalizeFileToken(rawVersion);
+				if (normalizedName)
+					return {
+						name: normalizedName,
+						...(normalizedVersion && { version: normalizedVersion }),
+					};
+			} catch {
+				// try next manifest
+			}
+	}
+
+	const bunfigContent = await readTextFile(join(input, "bunfig.toml"));
+	if (bunfigContent) {
+		const bunName = bunfigContent.match(/^name\s*=\s*"([^"]+)"/m)?.[1];
+		if (bunName) {
+			const normalizedName = normalizeFileToken(bunName);
+			if (normalizedName) return { name: normalizedName };
+		}
+	}
+
+	const gemfileContent = await readTextFile(join(input, "Gemfile"));
+	if (gemfileContent) {
+		const gemName = gemfileContent.match(/^gem\s+["']([^"']+)["']/m)?.[1];
+		if (gemName) {
+			const normalizedName = normalizeFileToken(gemName);
+			if (normalizedName) return { name: normalizedName };
+		}
+	}
+
+	const mixContent = await readTextFile(join(input, "mix.exs"));
+	if (mixContent) {
+		const appName = mixContent.match(
+			/def\s+project\s+do[\S\s]*?app:\s*:(\w+)/m,
+		)?.[1];
+		const appVersion = mixContent.match(/version:\s*["']([^"']+)["']/m)?.[1];
+		const normalizedName = appName ? normalizeFileToken(appName) : "";
+		const normalizedVersion = appVersion ? normalizeFileToken(appVersion) : "";
+		if (normalizedName)
+			return {
+				name: normalizedName,
+				...(normalizedVersion && { version: normalizedVersion }),
+			};
+	}
+
+	const pubspecContent = await readTextFile(join(input, "pubspec.yaml"));
+	if (pubspecContent) {
+		const pubName = pubspecContent.match(/^name:\s*(\S+)/m)?.[1];
+		const pubVersion = pubspecContent.match(/^version:\s*(\S+)/m)?.[1];
+		const normalizedName = pubName ? normalizeFileToken(pubName) : "";
+		const normalizedVersion = pubVersion ? normalizeFileToken(pubVersion) : "";
+		if (normalizedName)
+			return {
+				name: normalizedName,
+				...(normalizedVersion && { version: normalizedVersion }),
+			};
+	}
+
+	const packageSwiftContent = await readTextFile(join(input, "Package.swift"));
+	if (packageSwiftContent) {
+		const swiftName = packageSwiftContent.match(/name:\s*"([^"]+)"/m)?.[1];
+		if (swiftName) {
+			const normalizedName = normalizeFileToken(swiftName);
+			if (normalizedName) return { name: normalizedName };
+		}
+	}
+
+	const setupPyContent = await readTextFile(join(input, "setup.py"));
+	if (setupPyContent) {
+		const setupName = setupPyContent.match(/name\s*=\s*["']([^"']+)["']/m)?.[1];
+		const setupVersion = setupPyContent.match(
+			/version\s*=\s*["']([^"']+)["']/m,
+		)?.[1];
+		const normalizedName = setupName ? normalizeFileToken(setupName) : "";
+		const normalizedVersion = setupVersion
+			? normalizeFileToken(setupVersion)
+			: "";
+		if (normalizedName)
+			return {
+				name: normalizedName,
+				...(normalizedVersion && { version: normalizedVersion }),
+			};
+	}
+
+	const projectCljContent = await readTextFile(join(input, "project.clj"));
+	if (projectCljContent) {
+		const cljMatch = projectCljContent.match(
+			/\(defproject\s+([\w.-]+)\s+"([^"]+)"/m,
+		);
+		if (cljMatch) {
+			const normalizedName = normalizeFileToken(
+				cljMatch[1].split(".").pop() ?? cljMatch[1],
+			);
+			const normalizedVersion = normalizeFileToken(cljMatch[2]);
+			if (normalizedName)
+				return {
+					name: normalizedName,
+					version: normalizedVersion,
+				};
+		}
+	}
+
+	const gradleContent = await readTextFile(join(input, "build.gradle"));
+	if (gradleContent) {
+		const gradleName = gradleContent.match(
+			/(?:rootProject\.name|applicationId)\s*[=:]\s*['"]([^'"]+)['"]/m,
+		)?.[1];
+		const gradleVersion = gradleContent.match(
+			/version\s*[=:]\s*['"]([^'"]+)['"]/m,
+		)?.[1];
+		const normalizedName = gradleName ? normalizeFileToken(gradleName) : "";
+		const normalizedVersion = gradleVersion
+			? normalizeFileToken(gradleVersion)
+			: "";
+		if (normalizedName)
+			return {
+				name: normalizedName,
+				...(normalizedVersion && { version: normalizedVersion }),
+			};
+	}
+
+	for (const buildFile of ["BUILD", "WORKSPACE"]) {
+		const buildContent = await readTextFile(join(input, buildFile));
+		if (!buildContent) continue;
+		const workspaceName = buildContent.match(
+			/workspace\s*\(\s*name\s*=\s*"([^"]+)"/m,
+		)?.[1];
+		if (workspaceName) {
+			const normalizedName = normalizeFileToken(workspaceName);
+			if (normalizedName) return { name: normalizedName };
+		}
+	}
+
+	const flakeContent = await readTextFile(join(input, "flake.nix"));
+	if (flakeContent) {
+		const flakeName = flakeContent.match(/description\s*=\s*"([^"]+)"/m)?.[1];
+		if (flakeName) {
+			const normalizedName = normalizeFileToken(flakeName);
+			if (normalizedName) return { name: normalizedName };
+		}
+	}
+
 	// C++ Legacy/Standard (CMakeLists.txt)
 	const cmakeContent = await readTextFile(join(input, "CMakeLists.txt"));
 	if (cmakeContent) {
 		const nameMatch = cmakeContent.match(/project\s*\(\s*([\w.-]+)/i);
 		const versionMatch = cmakeContent.match(/version\s+([\d.]+)/i);
-		
+
 		const normalizedName = nameMatch ? normalizeFileToken(nameMatch[1]) : "";
-		const normalizedVersion = versionMatch ? normalizeFileToken(versionMatch[1]) : "";
-		
+		const normalizedVersion = versionMatch
+			? normalizeFileToken(versionMatch[1])
+			: "";
+
 		if (normalizedName)
 			return {
 				name: normalizedName,
-				version: normalizedVersion
+				version: normalizedVersion,
 			};
 	}
-	
+
 	return {
-		name: normalizeFileToken(basename(input)) || "project"
+		name: normalizeFileToken(basename(input)) || "project",
 	};
 }
 
-
-async function tryStat(pathValue: string): Promise<Awaited<ReturnType<typeof stat>> | undefined> {
+async function tryStat(
+	pathValue: string,
+): Promise<Awaited<ReturnType<typeof stat>> | undefined> {
 	try {
 		return await stat(pathValue);
 	} catch {
@@ -158,24 +368,27 @@ async function tryStat(pathValue: string): Promise<Awaited<ReturnType<typeof sta
 	}
 }
 
-async function resolveUniquePath(filePath: string, overwrite: boolean): Promise<string> {
-	if (overwrite)
-		return filePath;
-	
+async function resolveUniquePath(
+	filePath: string,
+	overwrite: boolean,
+): Promise<string> {
+	if (overwrite) return filePath;
+
 	const existingStats = await tryStat(filePath);
-	if (!existingStats)
-		return filePath;
-	
+	if (!existingStats) return filePath;
+
 	const parsed = parse(filePath);
 	let counter = 1;
-	
+
 	while (true) {
-		const candidatePath = join(parsed.dir, `${parsed.name}-${counter}${parsed.ext}`);
+		const candidatePath = join(
+			parsed.dir,
+			`${parsed.name}-${counter}${parsed.ext}`,
+		);
 		const candidateStats = await tryStat(candidatePath);
-		
-		if (!candidateStats)
-			return candidatePath;
-		
+
+		if (!candidateStats) return candidatePath;
+
 		counter += 1;
 	}
 }
@@ -185,32 +398,30 @@ export async function resolveOutputPath(
 	input: string,
 	projectMetadata: { name: string; version?: string },
 	overwrite: boolean,
-	format: "json" | "md"
+	format: "json" | "md",
 ): Promise<string> {
-	const baseFileName = projectMetadata.version ?
-		`${projectMetadata.name}-${projectMetadata.version}.${format}` :
-		`${projectMetadata.name}.${format}`;
-	
+	const baseFileName = projectMetadata.version
+		? `${projectMetadata.name}-${projectMetadata.version}.${format}`
+		: `${projectMetadata.name}.${format}`;
+
 	if (!outputValue)
 		return await resolveUniquePath(join(input, baseFileName), overwrite);
-	
-	if (outputValue === "-")
-		return "-";
-	
-	if (isNullishOutput(outputValue))
-		return outputValue;
-	
+
+	if (outputValue === "-") return "-";
+
+	if (isNullishOutput(outputValue)) return outputValue;
+
 	const hasTrailingSep = hasTrailingSeparator(outputValue);
 	const outputStats = await tryStat(outputValue);
-	
+
 	if (hasTrailingSep || outputStats?.isDirectory()) {
 		const filePath = join(outputValue, baseFileName);
-		
+
 		return await resolveUniquePath(filePath, overwrite);
 	}
-	
+
 	const hasRealExtension = /\.[A-Za-z]+$/.test(outputValue);
 	const filePath = hasRealExtension ? outputValue : `${outputValue}.${format}`;
-	
+
 	return await resolveUniquePath(filePath, overwrite);
 }

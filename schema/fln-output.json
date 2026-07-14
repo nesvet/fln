@@ -1,0 +1,300 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://fln.nesvet.dev/schema/output",
+	"title": "fln flatten output",
+	"description": "JSON document written by fln --format json (schemaVersion 2)",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schemaVersion",
+		"version",
+		"generated",
+		"projectName",
+		"input",
+		"options",
+		"root",
+		"stats"
+	],
+	"properties": {
+		"schemaVersion": {
+			"const": 2,
+			"description": "Output format version"
+		},
+		"version": {
+			"type": "string",
+			"description": "fln release version that produced this file"
+		},
+		"generated": {
+			"type": "string",
+			"pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$",
+			"description": "Snapshot timestamp (YYYY-MM-DD HH:mm)"
+		},
+		"projectName": {
+			"type": "string"
+		},
+		"input": {
+			"type": "string",
+			"description": "Absolute path to the flattened directory"
+		},
+		"options": {
+			"$ref": "#/$defs/OutputOptions"
+		},
+		"root": {
+			"$ref": "#/$defs/FileNode",
+			"description": "Directory tree with skipReason per node"
+		},
+		"files": {
+			"type": "array",
+			"description": "File contents; omitted when options.contents is false",
+			"items": {
+				"$ref": "#/$defs/OutputFileEntry"
+			}
+		},
+		"omittedFiles": {
+			"type": "array",
+			"description": "Flat, size-sorted list of omitted files (capped at 1000). Present only when files were omitted.",
+			"items": {
+				"$ref": "#/$defs/OmittedFile"
+			}
+		},
+		"omittedFilesTotal": {
+			"type": "integer",
+			"minimum": 0,
+			"description": "Total count of omitted files before capping (equals omittedFiles.length when not truncated)"
+		},
+		"omittedFilesTruncated": {
+			"type": "boolean",
+			"description": "True when omittedFiles was capped (omittedFilesTotal > 1000)"
+		},
+		"todos": {
+			"type": "array",
+			"description": "Collected TODO/FIXME markers when options.collectTodo is true",
+			"items": {
+				"$ref": "#/$defs/TodoEntry"
+			}
+		},
+		"todosTruncated": {
+			"type": "boolean",
+			"description": "True when todos was capped at 1000 entries"
+		},
+		"stats": {
+			"$ref": "#/$defs/ScanStatsOutput"
+		}
+	},
+	"allOf": [
+		{
+			"if": {
+				"properties": {
+					"options": {
+						"type": "object",
+						"properties": {
+							"contents": { "const": false }
+						},
+						"required": ["contents"]
+					}
+				},
+				"required": ["options"]
+			},
+			"then": {
+				"properties": {
+					"files": false
+				}
+			}
+		},
+		{
+			"if": {
+				"properties": {
+					"options": {
+						"type": "object",
+						"properties": {
+							"contents": { "const": true }
+						},
+						"required": ["contents"]
+					}
+				},
+				"required": ["options"]
+			},
+			"then": {
+				"required": ["files"]
+			}
+		}
+	],
+	"$defs": {
+		"SkipReason": {
+			"type": "string",
+			"enum": [
+				"generated",
+				"readError",
+				"security",
+				"symlinkCycle",
+				"symlinkEscape",
+				"tokenLimit",
+				"tooLarge",
+				"totalSizeLimit"
+			]
+		},
+		"FileNode": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["name", "path", "type", "size"],
+			"properties": {
+				"name": { "type": "string" },
+				"path": { "type": "string" },
+				"type": {
+					"type": "string",
+					"enum": ["directory", "file", "symlink"]
+				},
+				"size": { "type": "integer", "minimum": 0 },
+				"children": {
+					"type": "array",
+					"items": { "$ref": "#/$defs/FileNode" }
+				},
+				"target": { "type": "string" },
+				"isBinary": { "type": "boolean" },
+				"skipReason": { "$ref": "#/$defs/SkipReason" },
+				"securityDetail": { "type": "string" },
+				"maxBacktickRun": { "type": "integer", "minimum": 0 },
+				"scanMtimeMs": { "type": "number" },
+				"scanSize": { "type": "integer", "minimum": 0 },
+				"treeAnnotation": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"tokens": { "type": "integer", "minimum": 0 },
+						"lines": { "type": "integer", "minimum": 0 },
+						"size": { "type": "integer", "minimum": 0 }
+					}
+				}
+			}
+		},
+		"OutputFileEntry": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["path", "language", "isBinary", "content"],
+			"properties": {
+				"path": { "type": "string" },
+				"language": { "type": "string" },
+				"isBinary": { "type": "boolean" },
+				"content": {
+					"oneOf": [{ "type": "string" }, { "type": "null" }]
+				},
+				"skipReason": { "$ref": "#/$defs/SkipReason" }
+			}
+		},
+		"OmittedFile": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["path", "reason", "size"],
+			"properties": {
+				"path": { "type": "string" },
+				"reason": { "$ref": "#/$defs/SkipReason" },
+				"size": { "type": "integer", "minimum": 0 }
+			}
+		},
+		"TodoEntry": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["file", "line", "marker", "text"],
+			"properties": {
+				"file": { "type": "string" },
+				"line": { "type": "integer", "minimum": 1 },
+				"marker": { "type": "string" },
+				"owner": { "type": "string" },
+				"text": { "type": "string" }
+			}
+		},
+		"OutputOptions": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"tree",
+				"contents",
+				"format",
+				"maxFileSize",
+				"maxTotalSize",
+				"maxTokens",
+				"maxContentTokens",
+				"tokenModel",
+				"strictLimits",
+				"compress",
+				"outline",
+				"includeHidden",
+				"gitignore",
+				"exclude",
+				"include",
+				"followSymlinks"
+			],
+			"properties": {
+				"tree": { "type": "boolean" },
+				"contents": { "type": "boolean" },
+				"format": {
+					"type": "string",
+					"enum": ["md", "json"]
+				},
+				"maxFileSize": { "type": "integer", "minimum": 1 },
+				"maxTotalSize": { "type": "integer", "minimum": 0 },
+				"maxTokens": { "type": "integer", "minimum": 0 },
+				"maxContentTokens": { "type": "integer", "minimum": 0 },
+				"tokenModel": {
+					"type": "string",
+					"enum": ["estimate", "gpt-4", "gpt-4o", "gpt-5", "claude", "gemini"]
+				},
+				"strictLimits": { "type": "boolean" },
+				"compress": { "type": "boolean" },
+				"outline": { "type": "boolean" },
+				"includeHidden": { "type": "boolean" },
+				"gitignore": { "type": "boolean" },
+				"exclude": {
+					"type": "array",
+					"items": { "type": "string" }
+				},
+				"include": {
+					"type": "array",
+					"items": { "type": "string" }
+				},
+				"followSymlinks": {
+					"oneOf": [
+						{ "type": "boolean" },
+						{ "type": "string", "const": "in-root-only" }
+					]
+				},
+				"banner": { "type": "string" },
+				"footer": { "type": "string" },
+				"annotateTree": {
+					"type": "string",
+					"enum": ["tokens", "lines", "size"]
+				},
+				"collectTodo": { "type": "boolean" }
+			}
+		},
+		"ScanStatsOutput": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"filesScanned",
+				"filesIncluded",
+				"directories",
+				"binary",
+				"skipped",
+				"errors",
+				"totalSizeBytes"
+			],
+			"properties": {
+				"filesScanned": { "type": "integer", "minimum": 0 },
+				"filesIncluded": { "type": "integer", "minimum": 0 },
+				"directories": { "type": "integer", "minimum": 0 },
+				"binary": { "type": "integer", "minimum": 0 },
+				"skipped": { "type": "integer", "minimum": 0 },
+				"errors": { "type": "integer", "minimum": 0 },
+				"totalSizeBytes": { "type": "integer", "minimum": 0 },
+				"omittedByReason": {
+					"type": "object",
+					"additionalProperties": {
+						"type": "integer",
+						"minimum": 0
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,6 +1,5 @@
 import pc from "picocolors";
 
-
 export type StyleFunction = (text: number | string) => string;
 
 export const colors = {
@@ -10,7 +9,7 @@ export const colors = {
 	info: pc.cyan,
 	dim: pc.dim,
 	bold: pc.bold,
-	reset: pc.reset
+	reset: pc.reset,
 } as const;
 
 export const symbols = {
@@ -22,16 +21,15 @@ export const symbols = {
 	branch: "├─",
 	lastBranch: "└─",
 	barFull: "█",
-	barEmpty: "░"
+	barEmpty: "░",
 } as const;
 
 export function applyColor(
 	text: number | string,
 	colorFn: StyleFunction,
-	useColors: boolean
+	useColors: boolean,
 ): string {
-	if (!useColors)
-		return String(text);
-	
+	if (!useColors) return String(text);
+
 	return colorFn(String(text));
 }

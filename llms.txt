@@ -1,0 +1,42 @@
+# fln
+
+> A local, explainable context compiler for AI coding agents. Retrieval without embeddings. Context without a server.
+
+fln analyzes a codebase, plans what to include, and emits one AI-ready file (md/json) with diagnostics. Think tsc for LLM context: analyze → plan → emit.
+
+Important notes:
+- Local-first: no embeddings, no network during flatten / why / doctor / plan / diff / mcp. Exception: `fln upgrade`.
+- CLI + namespace API only: `fln()`, `.inspect()`, `.explain()`, `.doctor()`, `.plan()`, `.diff()`, `.mcp()`. Node ≥22 (ESM) or standalone binary.
+- Key commands: `fln`, `fln plan`, `fln why <path>`, `fln doctor`, `fln diff`, `fln mcp`, `fln init`, `fln upgrade`.
+- Filtering: `-e` exclude, `-i`/`--stdin` force-include, `--only`/`--since`/`--ext` whitelist; secrets never embedded even with force-include.
+
+Last reviewed: 2026-07-14
+
+## Docs
+
+- [README](https://github.com/nesvet/fln#readme): Human landing page — install, workflows, CLI/API reference
+- [AGENTS.md](https://github.com/nesvet/fln/blob/main/AGENTS.md): Architecture, invariants (namespace API, single-pass I/O, FlnError), contributor rules for agents
+- [SECURITY.md](https://github.com/nesvet/fln/blob/main/SECURITY.md): Secret detection scope and limits (not a guarantee)
+- [CONTRIBUTING.md](https://github.com/nesvet/fln/blob/main/CONTRIBUTING.md): Setup, `bun run verify`, PR expectations
+- [Install](https://fln.nesvet.dev/install): curl/PowerShell install scripts for standalone binaries
+- [npm package](https://www.npmjs.com/package/fln): Published package for Node/Bun (`npx fln`, `import { fln }`)
+
+## Schemas
+
+- [fln.json config](https://fln.nesvet.dev/schema): JSON Schema for project config (`fln init`)
+- [plan](https://fln.nesvet.dev/schema/plan): `fln plan --format json` / `toFlnPlanJson`
+- [output](https://fln.nesvet.dev/schema/output): Flatten JSON (`fln --format json`)
+- [doctor](https://fln.nesvet.dev/schema/doctor): `fln doctor --format json` / `toFlnDoctorJson`
+- [diff](https://fln.nesvet.dev/schema/diff): `fln diff --format json` / `toFlnDiffJson`
+
+## Examples
+
+- [examples/](https://github.com/nesvet/fln/tree/main/examples): Sample flatten outputs (TypeScript, Python, Go, Rust, Java)
+- [demo plan](https://github.com/nesvet/fln/blob/main/assets/demo-plan.md): Checked-in `fln plan --relevant` sample against this repo
+
+## Optional
+
+- [Changelog](https://github.com/nesvet/fln/blob/main/CHANGELOG.md): Release notes and breaking changes
+- [Issues](https://github.com/nesvet/fln/issues): Bug reports and feature requests
+- [benchmarks](https://github.com/nesvet/fln/tree/main/benchmarks): CI performance baselines (linux-x64)
+- [GitHub repository](https://github.com/nesvet/fln): Source, releases, and discussions

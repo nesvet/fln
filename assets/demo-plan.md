@@ -1,7 +1,7 @@
 # Context Plan: .
 
 Budget: 200,000 tokens
-Projected: 67,099 tokens
+Projected: 67,132 tokens
 Files included: 100
 Files omitted: 1
 
@@ -29,7 +29,7 @@ Files omitted: 1
   src/core/scan/buildDirectoryNode.ts — ~334 tokens (source file)
   src/core/scan/buildFileNode.ts — ~881 tokens (source file)
   src/path/canonical.ts — ~131 tokens (source file)
-  src/infra/clipboard.ts — ~1,205 tokens (source file)
+  src/infra/clipboard.ts — ~1,238 tokens (source file)
   src/core/render/collectStats.ts — ~604 tokens (source file)
   src/cli/commandLine.ts — ~3,123 tokens (source file)
   src/core/compress.ts — ~296 tokens (source file)

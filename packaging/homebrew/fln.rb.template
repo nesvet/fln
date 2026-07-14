@@ -1,0 +1,41 @@
+class Fln < Formula
+  desc "Local, explainable context compiler for AI coding agents"
+  homepage "https://github.com/nesvet/fln"
+  version "@VERSION@"
+  license "MIT"
+
+  livecheck do
+    url :stable
+    strategy :github_latest
+  end
+
+  on_macos do
+    on_arm do
+      url "https://github.com/nesvet/fln/releases/download/@VERSION@/fln-macos-arm64.tar.gz"
+      sha256 "@SHA_MACOS_ARM@"
+    end
+    on_intel do
+      url "https://github.com/nesvet/fln/releases/download/@VERSION@/fln-macos-x64.tar.gz"
+      sha256 "@SHA_MACOS_X64@"
+    end
+  end
+
+  on_linux do
+    on_arm do
+      url "https://github.com/nesvet/fln/releases/download/@VERSION@/fln-linux-arm64.tar.gz"
+      sha256 "@SHA_LINUX_ARM@"
+    end
+    on_intel do
+      url "https://github.com/nesvet/fln/releases/download/@VERSION@/fln-linux-x64.tar.gz"
+      sha256 "@SHA_LINUX_X64@"
+    end
+  end
+
+  def install
+    bin.install "fln"
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/fln --version")
+  end
+end

@@ -3,7 +3,7 @@
 # Codebase Snapshot: ts-app
 
 Generated: 2026-02-26 00:00  
-Files: 8 (14 scanned) | Directories: 2
+Files: 8 (10 scanned) | Directories: 2
 
 ---
 

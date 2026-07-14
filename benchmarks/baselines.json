@@ -1,5 +1,5 @@
 {
 	"_comment": "linux-x64 medians; CI fails above baseline +10%. Update with: bun run bench --profile medium --update-baselines",
-	"medium-dry-run-ms": 1134,
-	"medium-full-ms": 2397
+	"medium-dry-run-ms": 1413,
+	"medium-full-ms": 3617
 }

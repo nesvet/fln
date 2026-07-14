@@ -161,9 +161,10 @@ describe("detectSecretsInBuffer — known secret formats", () => {
 	});
 
 	it("detects GitHub token", () => {
-		const githubToken = ["ghp", "_1234567890abcdefghijklmnopqrstuvwxyz123456"].join(
-			"",
-		);
+		const githubToken = [
+			"ghp",
+			"_1234567890abcdefghijklmnopqrstuvwxyz123456",
+		].join("");
 		const buffer = Buffer.from(`token = "${githubToken}"\n`);
 		const result = detectSecretsInBuffer(buffer, buffer.length);
 		expect(result.detected).toBe(true);
@@ -171,7 +172,9 @@ describe("detectSecretsInBuffer — known secret formats", () => {
 	});
 
 	it("detects Stripe secret key", () => {
-		const stripeKey = ["sk", "live", "1234567890abcdefghijklmnopqrstu"].join("_");
+		const stripeKey = ["sk", "live", "1234567890abcdefghijklmnopqrstu"].join(
+			"_",
+		);
 		const buffer = Buffer.from(`stripe_key = "${stripeKey}"\n`);
 		const result = detectSecretsInBuffer(buffer, buffer.length);
 		expect(result.detected).toBe(true);
@@ -179,7 +182,9 @@ describe("detectSecretsInBuffer — known secret formats", () => {
 	});
 
 	it("detects Slack token", () => {
-		const slackToken = ["xox", "b-1234567890-abcdefghijklmnopqrstuvwxyz"].join("");
+		const slackToken = ["xox", "b-1234567890-abcdefghijklmnopqrstuvwxyz"].join(
+			"",
+		);
 		const buffer = Buffer.from(`slack = "${slackToken}"\n`);
 		const result = detectSecretsInBuffer(buffer, buffer.length);
 		expect(result.detected).toBe(true);

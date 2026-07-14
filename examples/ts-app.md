@@ -1,9 +1,9 @@
-<!-- 🥞 fln 1.2.0 -->
+<!-- 🥞 fln 2.0.0 · model: estimate -->
 
 # Codebase Snapshot: ts-app
 
 Generated: 2026-02-26 00:00  
-Files: 8 | Directories: 2
+Files: 8 (14 scanned) | Directories: 2
 
 ---
 
@@ -25,11 +25,28 @@ Files: 8 | Directories: 2
 ## Source Files
 
 ### README.md
-```md
+````md
 # ts-app
 
-TypeScript app example.
+Minimal TypeScript sample used by `bun run generate:examples` and the VHS hero demo ([`assets/demo.tape`](../../assets/demo.tape): `plan` → emit → `why`).
+
+## `.env.example` (fake secret fixture)
+
+[`./.env.example`](.env.example) holds a **fake** key (`sk-demo-not-a-real-secret`) for security demos — not a real credential.
+
+- fln’s default security patterns (`.env*`) skip content during flatten — secrets never land in the snapshot
+- Without `--include-hidden`, `fln why .env.example` stops at `hidden` (dotfile); the demo uses `fln why .env.example --include-hidden` to surface `security` / content omitted
+- The app reads `process.env.API_KEY` only; it never prints the key (only `API key configured: yes|no`)
+
+Do not commit a real `.env`. For a local run:
+
+```bash
+API_KEY=sk-demo-not-a-real-secret bun src/index.ts
+# or: set -a && source .env.example && set +a && bun src/index.ts
 ```
+
+See also [examples/README.md](../README.md).
+````
 
 ### package.json
 ```json
@@ -70,7 +87,16 @@ import { readLines } from "./reader";
 async function main(): Promise<void> {
 	const config = loadConfig();
 	const lines = await readLines(config.inputPath);
-	console.log(formatReport(buildReport(config.projectName, lines, config.minLineLength)));
+	console.log(
+		formatReport(
+			buildReport(
+				config.projectName,
+				lines,
+				config.minLineLength,
+				Boolean(config.apiKey),
+			),
+		),
+	);
 }
 
 void main();
@@ -82,12 +108,14 @@ export type AppConfig = {
 	projectName: string;
 	inputPath: string;
 	minLineLength: number;
+	apiKey: string | undefined;
 };
 
 export const loadConfig = (): AppConfig => ({
 	projectName: "ts-app",
 	inputPath: "sample.txt",
-	minLineLength: 3
+	minLineLength: 3,
+	apiKey: process.env.API_KEY,
 });
 ```
 
@@ -99,7 +127,8 @@ export const formatReport = (report: Report): string => {
 	const lines = [
 		`Project: ${report.projectName}`,
 		`Lines: ${report.lineCount}`,
-		"Filtered:"
+		`API key configured: ${report.apiKeyConfigured ? "yes" : "no"}`,
+		"Filtered:",
 	];
 	lines.push(...report.filteredLines.map((line) => `- ${line}`));
 	return lines.join("\n");
@@ -112,18 +141,21 @@ export type Report = {
 	projectName: string;
 	lineCount: number;
 	filteredLines: string[];
+	apiKeyConfigured: boolean;
 };
 
 export const buildReport = (
 	projectName: string,
 	lines: string[],
-	minLineLength: number
+	minLineLength: number,
+	apiKeyConfigured: boolean,
 ): Report => {
 	const filteredLines = lines.filter((line) => line.length >= minLineLength);
 	return {
 		projectName,
 		lineCount: lines.length,
-		filteredLines
+		filteredLines,
+		apiKeyConfigured,
 	};
 };
 ```

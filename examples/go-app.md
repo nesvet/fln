@@ -1,4 +1,4 @@
-<!-- 🥞 fln 1.2.0 -->
+<!-- 🥞 fln 2.0.0 · model: estimate -->
 
 # Codebase Snapshot: go-app
 

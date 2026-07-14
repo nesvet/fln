@@ -6,7 +6,16 @@ import { readLines } from "./reader";
 async function main(): Promise<void> {
 	const config = loadConfig();
 	const lines = await readLines(config.inputPath);
-	console.log(formatReport(buildReport(config.projectName, lines, config.minLineLength)));
+	console.log(
+		formatReport(
+			buildReport(
+				config.projectName,
+				lines,
+				config.minLineLength,
+				Boolean(config.apiKey),
+			),
+		),
+	);
 }
 
 void main();

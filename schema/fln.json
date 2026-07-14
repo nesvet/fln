@@ -18,16 +18,33 @@
 			"description": "Overwrite output file instead of adding numeric suffix when it already exists",
 			"default": false
 		},
-		"excludePatterns": {
+		"exclude": {
 			"type": "array",
 			"items": { "type": "string" },
-			"description": "Glob patterns to exclude (e.g. [\"*.test.ts\", \"fixtures/\"])",
+			"description": "Glob patterns to exclude. Prefix with ! to un-ignore after .gitignore (e.g. [\"*.log\", \"!important.log\"]). CLI: --exclude",
 			"default": []
 		},
-		"includePatterns": {
+		"include": {
 			"type": "array",
 			"items": { "type": "string" },
-			"description": "Glob patterns to force include, overriding .gitignore rules",
+			"description": "Force-include paths (additive; bypasses ignore and hidden dotfiles). CLI: --include",
+			"default": []
+		},
+		"only": {
+			"type": "array",
+			"items": { "type": "string" },
+			"description": "Whitelist: only matching files are scanned. CLI: --only, --since, --ext",
+			"default": []
+		},
+		"onlyMode": {
+			"type": "boolean",
+			"description": "When true with only, scan is restricted to the whitelist. Default: true when only is set via CLI/API",
+			"default": true
+		},
+		"relevant": {
+			"type": "array",
+			"items": { "type": "string" },
+			"description": "Relevant mode: only include files transitively imported by seed paths. Parses imports from file headers (first 8KB). Supports TS/JS, Python, Go, Rust, Java, C/C++.",
 			"default": []
 		},
 		"includeHidden": {
@@ -60,17 +77,100 @@
 					"examples": [ "100mb", "1gb" ]
 				}
 			],
-			"description": "Maximum total size for all included files. 0 means unlimited",
+			"description": "Maximum output file size. Graceful omit by default; use strictLimits to throw. Atomic write — no partial file on disk",
 			"default": 0
 		},
-		"includeContents": {
+		"maxTokens": {
+			"oneOf": [
+				{ "type": "integer", "minimum": 0 },
+				{ "type": "string", "pattern": "^\\d+$" }
+			],
+			"description": "Maximum estimated tokens in output (0 = unlimited). Lower-priority files omitted first. CLI: --max-tokens",
+			"default": 0
+		},
+		"maxContentTokens": {
+			"oneOf": [
+				{ "type": "integer", "minimum": 0 },
+				{ "type": "string", "pattern": "^\\d+$" }
+			],
+			"description": "Token budget for source file sections only (0 = use maxTokens for entire output)",
+			"default": 0
+		},
+		"tokenModel": {
+			"type": "string",
+			"enum": [ "claude", "estimate", "gemini", "gpt-4", "gpt-4o", "gpt-5" ],
+			"default": "estimate"
+		},
+		"strictLimits": {
 			"type": "boolean",
-			"description": "Include file contents in output",
+			"description": "Throw when maxTotalSize or maxTokens would be exceeded",
+			"default": false
+		},
+		"compress": {
+			"type": "boolean",
+			"description": "Extract signatures (imports, types, function signatures) — bodies omitted. Falls back to full content for unsupported file types.",
+			"default": false
+		},
+		"outline": {
+			"type": "boolean",
+			"description": "Outline mode — signatures only for every file; unsupported files get a placeholder. Implies contents.",
+			"default": false
+		},
+		"diffHunks": {
+			"type": "boolean",
+			"description": "With since: embed unified git diff hunks instead of full files",
+			"default": false
+		},
+		"strictToctou": {
+			"type": "boolean",
+			"description": "Throw when a file changed between scan and render (TOCTOU) instead of warning",
+			"default": false
+		},
+		"annotateTree": {
+			"type": "string",
+			"enum": [ "tokens", "lines", "size" ],
+			"description": "Annotate directory tree with per-file token, line, or byte-size counts. tokens/lines defer tree to end of output (single-pass). CLI: --annotate-tree"
+		},
+		"collectTodo": {
+			"type": "boolean",
+			"description": "Collect TODO/FIXME/HACK/XXX/NOTE/BUG/WARN markers into a separate section (render-phase). CLI: --collect-todo",
+			"default": false
+		},
+		"since": {
+			"type": "string",
+			"description": "Git ref for diffHunks mode (usually set via CLI --since)"
+		},
+		"encoding": {
+			"type": "string",
+			"enum": [ "auto", "utf8", "latin1" ],
+			"default": "auto"
+		},
+		"securityPatterns": {
+			"type": "array",
+			"items": { "type": "string" },
+			"description": "Additional glob patterns for sensitive paths to skip",
+			"default": []
+		},
+		"securityCheck": {
+			"type": "string",
+			"enum": [ "default", "strict" ],
+			"default": "default",
+			"description": "Security scan depth: default (512-byte header) or strict (4KB header, expanded patterns, lower entropy threshold)"
+		},
+		"outputSplit": {
+			"type": "integer",
+			"minimum": 1,
+			"description": "Maximum output parts when split by limits",
+			"default": 1
+		},
+		"contents": {
+			"type": "boolean",
+			"description": "Include file contents in output. CLI: --no-contents to exclude (tree only)",
 			"default": true
 		},
-		"includeTree": {
+		"tree": {
 			"type": "boolean",
-			"description": "Include directory tree structure",
+			"description": "Include directory tree in output. CLI: --no-tree to exclude",
 			"default": true
 		},
 		"format": {
@@ -80,8 +180,11 @@
 			"default": "md"
 		},
 		"followSymlinks": {
-			"type": "boolean",
-			"description": "Follow symlinks while scanning",
+			"oneOf": [
+				{ "type": "boolean" },
+				{ "type": "string", "const": "in-root-only" }
+			],
+			"description": "Follow symlinks while scanning; in-root-only warns on escape",
 			"default": false
 		},
 		"ansi": {

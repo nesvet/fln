@@ -1,0 +1,82 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://fln.nesvet.dev/schema/plan",
+	"title": "fln plan output",
+	"description": "JSON document written by fln plan --format json (schemaVersion 1)",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schemaVersion",
+		"input",
+		"budget",
+		"projectedTokens",
+		"files",
+		"omitted",
+		"generated"
+	],
+	"properties": {
+		"$schema": {
+			"type": "string",
+			"description": "JSON Schema URI for this document"
+		},
+		"schemaVersion": {
+			"const": 1,
+			"description": "Plan output format version"
+		},
+		"input": {
+			"type": "string",
+			"description": "Absolute path to the planned directory"
+		},
+		"budget": {
+			"type": "integer",
+			"minimum": 0,
+			"description": "Token budget (0 = unlimited)"
+		},
+		"projectedTokens": {
+			"type": "integer",
+			"minimum": 0,
+			"description": "Total projected tokens after fidelity adjustments"
+		},
+		"files": {
+			"type": "array",
+			"items": { "$ref": "#/$defs/FlnPlanFile" }
+		},
+		"omitted": {
+			"type": "array",
+			"items": { "$ref": "#/$defs/FlnPlanOmitted" }
+		},
+		"generated": {
+			"type": "string",
+			"pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}$",
+			"description": "Plan timestamp (YYYY-MM-DD HH:mm)"
+		}
+	},
+	"$defs": {
+		"Fidelity": {
+			"type": "string",
+			"enum": ["compressed", "full", "omit", "outline"],
+			"description": "Fidelity assigned to a file: full (full content), compressed (signatures where supported), outline (signatures only), omit (excluded)"
+		},
+		"FlnPlanFile": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["path", "fidelity", "estimatedTokens", "reason"],
+			"properties": {
+				"path": { "type": "string" },
+				"fidelity": { "$ref": "#/$defs/Fidelity" },
+				"estimatedTokens": { "type": "integer", "minimum": 0 },
+				"reason": { "type": "string" }
+			}
+		},
+		"FlnPlanOmitted": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["path", "reason", "savedTokens"],
+			"properties": {
+				"path": { "type": "string" },
+				"reason": { "type": "string" },
+				"savedTokens": { "type": "integer", "minimum": 0 }
+			}
+		}
+	}
+}

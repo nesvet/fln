@@ -1,6 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { formatByteSize, formatTokenCount, parseByteSize } from "../src/core/size.js";
-
+import {
+	formatByteSize,
+	formatTokenCount,
+	parseByteSize,
+} from "../src/core/size.js";
 
 describe("size utilities", () => {
 	it("parses byte sizes", () => {
@@ -9,18 +12,18 @@ describe("size utilities", () => {
 		expect(parseByteSize("10mb")).toBe(10 * 1024 * 1024);
 		expect(parseByteSize("1.5gb")).toBe(1610612736);
 	});
-	
+
 	it("formats byte sizes", () => {
 		expect(formatByteSize(0)).toBe("0 B");
 		expect(formatByteSize(1024)).toBe("1 KB");
 		expect(formatByteSize(1048576)).toBe("1 MB");
 		expect(formatByteSize(1073741824)).toBe("1 GB");
 	});
-	
+
 	it("throws on invalid sizes", () => {
 		expect(() => parseByteSize("nope")).toThrow("Invalid size");
 	});
-	
+
 	it("formats token counts", () => {
 		expect(formatTokenCount(0)).toBe("≈ 0");
 		expect(formatTokenCount(100)).toBe("≈ 100");

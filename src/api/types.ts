@@ -1,226 +1,131 @@
-export type LogLevel = "debug" | "normal" | "silent" | "verbose";
+import type {
+	AnnotateTreeMode,
+	FollowSymlinksMode,
+	LogLevel,
+	ProgressCallback,
+	TextEncodingMode,
+} from "../core/index.js";
+import type { SecurityCheckMode } from "../core/securityMatcher.js";
+import type { FileNode, ScanStats } from "../core/types.js";
+import type { TokenModel } from "../infra/tokenBudget.js";
 
-export type ProgressCallback = (current: number, total: number) => void;
+export type { LogLevel, ProgressCallback } from "../core/index.js";
 
 /**
  * Configuration options for fln function
  */
 export type FlnOptions = {
-	/**
-	 * Directory to flatten (input)
-	 * @default process.cwd()
-	 */
+	/** Directory to flatten */
 	input?: string;
-	
-	/**
-	 * Output file path or directory
-	 * @default Auto-generated from project metadata (e.g., "my-app-1.0.0.md")
-	 */
+	/** Output file path or directory */
 	output?: string;
-	
-	/**
-	 * @deprecated Use input. Remove in next major.
-	 */
-	rootDirectory?: string;
-	
-	/**
-	 * @deprecated Use output. Remove in next major.
-	 */
-	outputFile?: string;
-	
-	/**
-	 * Overwrite output file instead of adding numeric suffix when it already exists
-	 * @default false
-	 */
 	overwrite?: boolean;
-	
-	/**
-	 * Glob patterns to exclude (e.g., ["*.test.ts", "fixtures/"])
-	 * @default []
-	 */
-	excludePatterns?: string[];
-	
-	/**
-	 * Glob patterns to force include, ignoring .gitignore rules
-	 * @default []
-	 */
-	includePatterns?: string[];
-	
-	/**
-	 * Include hidden files and directories (starting with .)
-	 * @default false
-	 */
+	exclude?: string[];
+	include?: string[];
+	/** Whitelist: only matching files (use with --since/--ext or alone) */
+	only?: string[];
+	/** Restrict scan to only (default: true when only is non-empty) */
+	onlyMode?: boolean;
+	/** Relevant mode: only include files transitively imported by seeds */
+	relevant?: string[];
+	/** File paths piped via stdin (CLI: --stdin). Force-included (bypasses gitignore/exclude), then tree pruned to exactly these. Security patterns still apply. */
+	stdinPaths?: string[];
 	includeHidden?: boolean;
-	
-	/**
-	 * Use .gitignore rules for filtering
-	 * @default true
-	 */
 	gitignore?: boolean;
-	
-	/**
-	 * @deprecated Use gitignore. Remove in next major.
-	 */
-	useGitignore?: boolean;
-	
-	/**
-	 * Maximum individual file size (bytes or string like "10mb")
-	 * @default 10485760 (10 MB)
-	 */
 	maxFileSize?: number | string;
-	
-	/**
-	 * @deprecated Use maxFileSize. Remove in next major.
-	 */
-	maximumFileSizeBytes?: number | string;
-	
-	/**
-	 * Maximum total size for all included files (bytes or string like "100mb")
-	 * @default 0 (unlimited)
-	 */
 	maxTotalSize?: number | string;
-	
-	/**
-	 * @deprecated Use maxTotalSize. Remove in next major.
-	 */
-	maximumTotalSizeBytes?: number | string;
-	
-	/**
-	 * Include file contents in output
-	 * @default true
-	 */
-	includeContents?: boolean;
-	
-	/**
-	 * Include directory tree structure
-	 * @default true
-	 */
-	includeTree?: boolean;
-	
-	/**
-	 * Output format
-	 * @default "md"
-	 */
+	/** Maximum estimated tokens in output (0 = unlimited) */
+	maxTokens?: number;
+	/** Token budget for source file sections only (0 = use maxTokens for entire output) */
+	maxContentTokens?: number;
+	tokenModel?: TokenModel;
+	contents?: boolean;
+	tree?: boolean;
 	format?: "json" | "md";
-	
-	/**
-	 * Follow symlinks while scanning
-	 * @default false
-	 */
-	followSymlinks?: boolean;
-	
-	/**
-	 * Date string for the "Generated" header (format: YYYY-MM-DD HH:mm). If omitted, current date is used.
-	 */
+	followSymlinks?: FollowSymlinksMode;
 	date?: string;
-	
-	/**
-	 * @deprecated Use date. Remove in next major.
-	 */
-	generatedDate?: string;
-	
-	/**
-	 * Custom banner text at the beginning of output
-	 */
 	banner?: string;
-	
-	/**
-	 * Path to file whose contents are prepended to output (relative to input). File is excluded from tree.
-	 */
 	bannerFile?: string;
-	
-	/**
-	 * Custom footer text at the end of output
-	 */
 	footer?: string;
-	
-	/**
-	 * Path to file whose contents are appended to output (relative to input). File is excluded from tree.
-	 */
 	footerFile?: string;
-	
-	/**
-	 * Progress callback function
-	 * @param current Current number of processed items
-	 * @param total Estimated total number of items
-	 */
+	/** Scan and stats only — no output file, no content reads for cache */
+	dryRun?: boolean;
+	/** Throw when limits exceeded instead of graceful omit */
+	strictLimits?: boolean;
+	/** Throw when a file changed between scan and render (TOCTOU) instead of warning */
+	strictToctou?: boolean;
+	compress?: boolean;
+	/** Outline mode: signatures only, no implementations (implies contents) */
+	outline?: boolean;
+	/** With since — embed unified diff hunks instead of full files */
+	diffHunks?: boolean;
+	since?: string;
+	encoding?: TextEncodingMode;
+	securityPatterns?: string[];
+	securityCheck?: SecurityCheckMode;
+	/** Max output parts when split by limits (default 1) */
+	outputSplit?: number;
 	onProgress?: ProgressCallback;
-	
-	/**
-	 * Logging level
-	 * @default "silent"
-	 */
 	logLevel?: LogLevel;
-	
-	/**
-	 * Use ANSI colors in log output
-	 * @default false (for programmatic use)
-	 */
 	ansi?: boolean;
-	
-	/**
-	 * @deprecated Use ansi. Remove in next major.
-	 */
-	useAnsi?: boolean;
+	/** Write output to a temp file, then copy to the system clipboard (CLI: --copy) */
+	copy?: boolean;
+	/** Skip reading `fln.json`; use defaults and explicit options only (CLI: --ignore-config) */
+	ignoreConfig?: boolean;
+	/** Annotate directory tree with size (metadata), tokens, or line counts (CLI: --annotate-tree) */
+	annotateTree?: AnnotateTreeMode;
+	/** Collect TODO/FIXME markers into a separate section (render-phase; CLI: --collect-todo) */
+	collectTodo?: boolean;
 };
 
-/**
- * Result returned by fln function
- */
-export type FlnResult = {
-	/**
-	 * Project name detected from package.json or directory name
-	 */
+export type FlnInspectResult = {
 	projectName: string;
-	
-	/**
-	 * Number of files processed
-	 */
-	files: number;
-	
-	/**
-	 * Number of directories scanned
-	 */
-	directories: number;
-	
-	/**
-	 * Number of binary files detected
-	 */
-	binary: number;
-	
-	/**
-	 * Number of files skipped (too large, generated, errors)
-	 */
-	skipped: number;
-	
-	/**
-	 * Number of errors encountered
-	 */
-	errors: number;
-	
-	/**
-	 * Total input size in bytes
-	 */
-	totalSizeBytes: number;
-	
-	/**
-	 * Output file size in bytes
-	 */
-	outputSizeBytes: number;
-	
-	/**
-	 * Estimated token count for output
-	 */
-	outputTokenCount: number;
-	
-	/**
-	 * Absolute path to the generated output file
-	 */
-	outputPath: string;
-	
-	/**
-	 * @internal
-	 * Root file node for advanced usage (collecting stats, etc.)
-	 */
-	_root?: unknown;
+	root: FileNode;
+	stats: ScanStats;
 };
+
+export type FlnDoctorOptions = Omit<
+	FlnOptions,
+	| "annotateTree"
+	| "banner"
+	| "bannerFile"
+	| "collectTodo"
+	| "compress"
+	| "copy"
+	| "date"
+	| "diffHunks"
+	| "dryRun"
+	| "footer"
+	| "footerFile"
+	| "format"
+	| "maxContentTokens"
+	| "maxTotalSize"
+	| "output"
+	| "outputSplit"
+	| "overwrite"
+	| "since"
+	| "strictLimits"
+	| "strictToctou"
+	| "tree"
+> & {
+	/** Adds TOKENS_OVER_BUDGET warning when token estimate exceeds this (defaults to `maxTokens` if set) */
+	maxTokensWarn?: number;
+	/** Suggest exclude patterns to fit within this token budget */
+	recommendBudget?: number;
+};
+
+export type FlnResult = {
+	projectName: string;
+	filesScanned: number;
+	filesIncluded: number;
+	directories: number;
+	binary: number;
+	skipped: number;
+	errors: number;
+	totalSizeBytes: number;
+	outputSizeBytes: number;
+	outputTokenCount: number;
+	outputPath: string;
+};
+
+export type { FileNode, ScanStats, SkipReason } from "../core/types.js";

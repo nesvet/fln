@@ -1,0 +1,128 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://fln.nesvet.dev/schema/doctor",
+	"title": "fln doctor output",
+	"description": "JSON document written by fln doctor --format json (schemaVersion 1)",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schemaVersion",
+		"projectName",
+		"config",
+		"git",
+		"scan",
+		"estimate",
+		"extensions",
+		"warnings"
+	],
+	"properties": {
+		"$schema": {
+			"type": "string",
+			"description": "JSON Schema URI for this document"
+		},
+		"schemaVersion": {
+			"const": 1,
+			"description": "Doctor output format version"
+		},
+		"projectName": {
+			"type": "string",
+			"description": "Basename of the flattened directory"
+		},
+		"config": { "$ref": "#/$defs/FlnDoctorConfig" },
+		"git": { "$ref": "#/$defs/GitDoctorInfo" },
+		"scan": { "$ref": "#/$defs/FlnDoctorScan" },
+		"estimate": { "$ref": "#/$defs/FlnDoctorEstimate" },
+		"extensions": {
+			"type": "array",
+			"items": { "$ref": "#/$defs/ExtensionBreakdownEntry" }
+		},
+		"warnings": {
+			"type": "array",
+			"items": { "$ref": "#/$defs/FlnDoctorWarning" }
+		},
+		"recommend": { "$ref": "#/$defs/FlnDoctorRecommend" }
+	},
+	"$defs": {
+		"FlnDoctorConfig": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["loaded", "path"],
+			"properties": {
+				"loaded": { "type": "boolean" },
+				"path": { "type": "string" },
+				"ignored": { "type": "boolean" }
+			}
+		},
+		"GitDoctorInfo": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["available"],
+			"properties": {
+				"available": { "type": "boolean" },
+				"branch": { "type": "string" },
+				"dirty": { "type": "boolean" }
+			}
+		},
+		"FlnDoctorScan": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["filesIncluded", "filesScanned"],
+			"properties": {
+				"filesIncluded": { "type": "integer", "minimum": 0 },
+				"filesScanned": { "type": "integer", "minimum": 0 }
+			}
+		},
+		"FlnDoctorEstimate": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["totalBytes", "tokens", "model"],
+			"properties": {
+				"totalBytes": { "type": "integer", "minimum": 0 },
+				"tokens": { "type": "integer", "minimum": 0 },
+				"model": { "type": "string" }
+			}
+		},
+		"ExtensionBreakdownEntry": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["ext", "files", "bytes"],
+			"properties": {
+				"ext": { "type": "string" },
+				"files": { "type": "integer", "minimum": 0 },
+				"bytes": { "type": "integer", "minimum": 0 }
+			}
+		},
+		"FlnDoctorWarning": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["code"],
+			"properties": {
+				"code": {
+					"type": "string",
+					"enum": [
+						"FILES_CHANGED_DURING_PREFLIGHT",
+						"FILES_TOO_LARGE",
+						"SECURITY_IN_TREE",
+						"TOKENS_OVER_BUDGET"
+					]
+				},
+				"count": { "type": "integer", "minimum": 0 },
+				"limit": { "type": "integer", "minimum": 0 },
+				"estimate": { "type": "integer", "minimum": 0 }
+			}
+		},
+		"FlnDoctorRecommend": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["exclude", "projectedTokens", "omittedCount"],
+			"properties": {
+				"exclude": {
+					"type": "array",
+					"items": { "type": "string" }
+				},
+				"projectedTokens": { "type": "integer", "minimum": 0 },
+				"omittedCount": { "type": "integer", "minimum": 0 }
+			}
+		}
+	}
+}

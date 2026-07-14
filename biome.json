@@ -1,0 +1,15 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"extends": ["@nesvet/biome-config/node"],
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"javascript": {
+		"globals": ["Bun"]
+	},
+	"files": {
+		"includes": ["**", "!examples"]
+	}
+}

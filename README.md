@@ -484,10 +484,10 @@ jobs:
   snapshot:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Generate snapshot
         run: npx fln . -o codebase.md -w --no-ansi
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: codebase-snapshot
           path: codebase.md

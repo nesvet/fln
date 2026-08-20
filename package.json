@@ -1,6 +1,6 @@
 {
 	"name": "fln",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"description": "A local, explainable context compiler for AI coding agents. Analyze, plan, and emit optimal context — with diagnostics. Retrieval without embeddings, context without a server.",
 	"keywords": [
 		"cli",

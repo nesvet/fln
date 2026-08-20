@@ -89,8 +89,8 @@
 		"strip-ansi": "^7.2.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.2",
-		"@nesvet/biome-config": "^1.0.0",
+		"@biomejs/biome": "^2.5.9",
+		"@nesvet/biome-config": "^2.0.0",
 		"@types/bun": "1.4.0",
 		"@types/bytes": "^3.1.5",
 		"@types/node": "^24.13.2",

@@ -46,7 +46,7 @@ bun run bench --profile medium --update-baselines
 On Apple Silicon, use Docker with `linux/amd64` so `process.arch` is `x64`:
 
 ```bash
-docker run --rm --platform linux/amd64 -v "$PWD":/work -w /work oven/bun:1.3.14 \
+docker run --rm --platform linux/amd64 -v "$PWD":/work -w /work oven/bun:1.4.0 \
   bash -c "bun install --frozen-lockfile && bun run build:npm && bun run bench --profile medium --update-baselines"
 ```
 

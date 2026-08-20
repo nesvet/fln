@@ -757,7 +757,7 @@ Real outputs from [`examples/`](examples/):
 
 **Node.js** — requires `>=22.0.0`, ESM-only (`"type": "module"`). Install via `npm i -g fln` or run with `npx`.
 
-**Bun** — requires `>=1.3.14`. Install via `bun add -g fln` or run with `bunx`.
+**Bun** — requires `>=1.4.0`. Install via `bun add -g fln` or run with `bunx`.
 
 **Standalone binary** — no runtime required. Install via the `curl` / PowerShell one-liner above.
 

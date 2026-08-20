@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-08-21
+
+Standalone binaries are compiled with Bun 1.4. Toolchain and dependencies catch up to that runtime.
+
+### Changed
+
+- Compile and CI pin **Bun 1.4.0**; `bun.lock` is `lockfileVersion` 2
+- **TypeScript 7.0.2**, `@nesvet/biome-config` 2, `gpt-tokenizer` 4, MCP SDK 1.30
+
 ## [2.0.0] - 2026-07-14
 
 Initial release of fln 2.x on npm `latest` — fln becomes a **local, explainable context compiler** for AI coding agents (analyze → plan → emit, with diagnostics).
@@ -268,7 +277,8 @@ Initial release of fln 2.x on npm `latest` — fln becomes a **local, explainabl
 - Cross-platform shell installers with SHA256 verification (macOS, Linux, Windows)
 - Comprehensive test suite
 
-[Unreleased]: https://github.com/nesvet/fln/compare/2.0.0...HEAD
+[Unreleased]: https://github.com/nesvet/fln/compare/2.0.1...HEAD
+[2.0.1]: https://github.com/nesvet/fln/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/nesvet/fln/compare/1.2.0...2.0.0
 [1.2.0]: https://github.com/nesvet/fln/compare/1.1.3...1.2.0
 [1.1.3]: https://github.com/nesvet/fln/compare/1.1.2...1.1.3

@@ -8,7 +8,7 @@ fln is a **local, explainable context compiler** for AI coding agents. It analyz
 
 - **Language:** TypeScript (ESM-only, `"type": "module"`)
 - **Runtime:** Bun (dev/build) + Node.js ≥22 (npm publish target)
-- **Package manager:** Bun (`bun@1.3.14` — see `packageManager` in `package.json`)
+- **Package manager:** Bun (`bun@1.4.0` — see `packageManager` in `package.json`)
 - **Binary:** `bun build --compile` produces a standalone `fln` binary (no Node required)
 
 ## Architecture
@@ -110,7 +110,7 @@ These apply to humans and agents; enforced in CI where noted.
 
 ### Bun toolchain
 
-- Keep `packageManager` in `package.json` and `bun-version` in `.github/workflows/*.yaml` (`oven-sh/setup-bun`) in sync. Current: `bun@1.3.14`.
+- Keep `packageManager` in `package.json` and `bun-version` in `.github/workflows/*.yaml` (`oven-sh/setup-bun`) in sync. Current: `bun@1.4.0`.
 
 ## Versions and tags
 

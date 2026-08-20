@@ -83,8 +83,8 @@
 		"@modelcontextprotocol/sdk": "^1.30.0",
 		"bytes": "^3.1.2",
 		"gpt-tokenizer": "^4.0.0",
-		"ignore": "^7.0.5",
-		"p-limit": "^7.3.0",
+		"ignore": "^7.0.6",
+		"p-limit": "^7.3.1",
 		"picocolors": "^1.1.1",
 		"strip-ansi": "^7.2.0"
 	},
@@ -95,7 +95,7 @@
 		"@types/bytes": "^3.1.5",
 		"@types/node": "^24.13.3",
 		"ajv": "^8.20.0",
-		"fast-check": "^4.8.0",
+		"fast-check": "^4.9.0",
 		"typescript": "7.0.2"
 	},
 	"packageManager": "bun@1.4.0",

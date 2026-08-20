@@ -80,7 +80,7 @@
 		"verify": "bun run generate:version && bun run check:examples && bun run check:demo-plan && bun run lint && bun run check:api-discipline && bun run typecheck && bun run build:npm && bun run check:dist && bun test && bun run build"
 	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "^1.29.0",
+		"@modelcontextprotocol/sdk": "^1.30.0",
 		"bytes": "^3.1.2",
 		"gpt-tokenizer": "^3.4.0",
 		"ignore": "^7.0.5",
@@ -93,10 +93,10 @@
 		"@nesvet/biome-config": "^2.0.0",
 		"@types/bun": "1.4.0",
 		"@types/bytes": "^3.1.5",
-		"@types/node": "^24.13.2",
+		"@types/node": "^24.13.3",
 		"ajv": "^8.20.0",
 		"fast-check": "^4.8.0",
-		"typescript": "6.0.3"
+		"typescript": "7.0.2"
 	},
 	"packageManager": "bun@1.4.0",
 	"engines": {
